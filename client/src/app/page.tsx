@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export default function Home() {
   const categories = [
@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <main className="min-h-[calc(100vh-80px)] bg-white">
       {/* Hero */}
-      <section className="relative left-1/2 min-h-[680px] w-screen -translate-x-1/2 overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 text-center md:min-h-[720px]" style={{ backgroundImage: "url(/voluntess-hero.png)" }}>
+      <section className="relative left-1/2 min-h-0 w-screen -translate-x-1/2 overflow-hidden bg-none bg-white px-6 py-16 text-center md:min-h-0" style={{ backgroundImage: "none", backgroundColor: "#ffffff" }}>
         <h1 className="mx-auto max-w-3xl text-5xl font-bold leading-tight tracking-tight text-gray-900 md:text-6xl">
           Connect with people.
           Help your community.
@@ -26,12 +26,12 @@ export default function Home() {
           href="/explore"
           className="mt-8 inline-flex items-center rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
         >
-          Explore →
+          Explore 
         </Link>
       </section>
 
       {/* Categories */}
-      <section className="relative z-10 mx-auto -mt-20 max-w-4xl px-6 pb-20">
+      <section className="relative z-10 mx-auto mt-8 max-w-4xl px-6 pb-20">
         <h2 className="mb-8 text-center text-xl font-semibold text-gray-900">
           What do you care about?
         </h2>
@@ -55,3 +55,7 @@ export default function Home() {
     </main>
   );
 }
+
+
+
+

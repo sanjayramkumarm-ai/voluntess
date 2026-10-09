@@ -10,3 +10,13 @@ node_modules/
 dist/
 build/
 *.log
+
+# Local temporary backups
+*.backup
+*.encoding-backup
+*.syntax-backup
+*.quest-backup
+*.layout-backup
+*.mobile-backup
+*.background-backup
+*.navbar-backup

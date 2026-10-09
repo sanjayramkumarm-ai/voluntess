@@ -4,6 +4,7 @@ import Application from "../models/Application";
 import Opportunity from "../models/Opportunity";
 import { AuthReq } from "../middleware/auth";
 import Notification from "../models/Notification";
+import { recordQuestEvent } from "./questRewards";
 
 export const apply = async (
   req: AuthReq,
@@ -28,6 +29,16 @@ export const apply = async (
     opportunity: opportunity._id,
     message: message.message || ""
   });
+
+  try {
+    await recordQuestEvent(
+      req.user!.id,
+      "apply_opportunity",
+      String(application._id)
+    );
+  } catch (error) {
+    console.error("Quest reward update failed:", error);
+  }
 
   res.status(201).json(application);
 };
@@ -98,8 +109,22 @@ export const decide = async (
     });
   }
 
+  const wasAlreadyAccepted = application.status === "accepted";
+
   application.status = status;
   await application.save();
+
+  if (status === "accepted" && !wasAlreadyAccepted) {
+    try {
+      await recordQuestEvent(
+        String(application.volunteer),
+        "accepted_application",
+        String(application._id)
+      );
+    } catch (error) {
+      console.error("Acceptance Quest update failed:", error);
+    }
+  }
 
   const opportunityTitle =
     opportunity.title || "volunteering opportunity";
@@ -126,3 +151,5 @@ export const decide = async (
 
   res.json(application);
 };
+
+

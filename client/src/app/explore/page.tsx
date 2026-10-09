@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -43,16 +43,16 @@ export default function ExplorePage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-16 text-white">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <Link
             href="/"
             className="mb-5 inline-block text-sm font-medium text-blue-100 hover:text-white"
           >
-            ← Back to Home
+            â† Back to Home
           </Link>
 
           <p className="mb-3 text-sm font-semibold uppercase tracking-wider">
-            {category ? `🌱 ${category}` : "Make an impact"}
+            {category ? `ðŸŒ± ${category}` : "Make an impact"}
           </p>
 
           <h1 className="text-4xl font-bold md:text-5xl">
@@ -65,7 +65,7 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
+      <section className="mx-auto max-w-7xl px-6 py-10">
         {loading && (
           <div className="rounded-xl bg-white p-8 text-center shadow">
             Loading opportunities...
@@ -80,7 +80,7 @@ export default function ExplorePage() {
 
         {!loading && !error && opportunities.length === 0 && (
           <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
-            <div className="text-5xl">🌱</div>
+            <div className="text-5xl">ðŸŒ±</div>
 
             <h2 className="mt-4 text-2xl font-bold text-gray-900">
               No opportunities yet
@@ -117,7 +117,7 @@ export default function ExplorePage() {
                   href="/explore"
                   className="text-sm font-semibold text-blue-600 hover:text-blue-700"
                 >
-                  View all →
+                  View all â†’
                 </Link>
               )}
             </div>
@@ -144,7 +144,7 @@ export default function ExplorePage() {
                     </p>
 
                     <div className="mt-5 space-y-2 text-sm text-gray-600">
-                      <p>📍 {item.location}</p>
+                      <p>ðŸ“ {item.location}</p>
 
                       <p>
                         📅{" "}
@@ -154,7 +154,7 @@ export default function ExplorePage() {
                       </p>
 
                       {item.startTime && (
-                        <p>⏰ {item.startTime}</p>
+                        <p>â° {item.startTime}</p>
                       )}
                     </div>
 
@@ -174,3 +174,5 @@ export default function ExplorePage() {
     </main>
   );
 }
+
+

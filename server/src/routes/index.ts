@@ -5,6 +5,7 @@ import * as auth from "../controllers/auth";
 import * as opp from "../controllers/opportunity";
 import * as app from "../controllers/application";
 import * as notification from "../controllers/notification";
+import * as quest from "../controllers/quest";
 
 const r = Router();
 
@@ -69,5 +70,8 @@ r.patch(
   allow("ngo"),
   wrap(app.decide)
 );
+
+r.get("/quests/mine", protect, allow("volunteer"), wrap(quest.mine));
+r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 export default r;

@@ -17,6 +17,8 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.16",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -27,7 +29,9 @@
     "@types/http-errors": "^2.0.5",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/ms": "^2.1.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.7.4",
+    "@types/nodemailer": "^8.0.2",
     "@types/qs": "^6.15.1",
     "@types/range-parser": "^1.2.7",
     "@types/send": "^1.2.1",

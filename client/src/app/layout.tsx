@@ -1,4 +1,5 @@
-﻿import "./globals.css";
+﻿// @ts-expect-error CSS files are handled by Next.js at build time.
+import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {

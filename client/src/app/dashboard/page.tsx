@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           </p>
 
           <h1 className="text-4xl font-bold">
-            Welcome, {user.name || "Volunteer"}! 👋
+            Welcome, {user.name || "Volunteer"}! 
           </h1>
 
           <p className="mt-3 text-lg text-blue-100">
@@ -110,7 +110,7 @@ export default function DashboardPage() {
         <section className="grid gap-6 md:grid-cols-3">
 
           <div className="rounded-2xl bg-white p-7 shadow-sm">
-            <div className="mb-5 text-3xl">🌱</div>
+            <div className="mb-5 text-3xl"></div>
 
             <h2 className="text-2xl font-bold text-gray-900">
               Explore Opportunities
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-7 shadow-sm">
-            <div className="mb-5 text-3xl">📝</div>
+            <div className="mb-5 text-3xl"></div>
 
             <h2 className="text-2xl font-bold text-gray-900">
               My Applications
@@ -170,7 +170,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-7 shadow-sm">
-            <div className="mb-5 text-3xl">🏆</div>
+            <div className="mb-5 text-3xl"></div>
 
             <h2 className="text-2xl font-bold text-gray-900">
               My Impact
@@ -180,35 +180,32 @@ export default function DashboardPage() {
               Track your volunteer hours, achievements, and certificates.
             </p>
 
-            <button
-              disabled
-              className="mt-6 rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-500"
+            <Link
+              href="/quests"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
             >
-              Coming Next
-            </button>
+              Open Voluntess Quest
+            </Link>
           </div>
 
         </section>
 
         {/* Applications */}
-        <section className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
-
+        <section className="mt-8 rounded-2xl bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                📝 My Applications
+                My Applications
               </h2>
-
               <p className="mt-1 text-gray-500">
-                Your application status updates automatically.
+                Track the status of your volunteering applications.
               </p>
             </div>
-
             <button
               onClick={loadApplications}
               className="rounded-lg bg-gray-900 px-5 py-3 font-semibold text-white hover:bg-gray-800"
             >
-              🔄 Refresh
+              Refresh status
             </button>
           </div>
 
@@ -222,17 +219,12 @@ export default function DashboardPage() {
             </div>
           ) : applications.length === 0 ? (
             <div className="mt-8 rounded-xl bg-gray-50 p-10 text-center">
-              <div className="text-5xl">🤝</div>
-
-              <h3 className="mt-4 text-xl font-bold text-gray-800">
+              <h3 className="text-xl font-bold text-gray-800">
                 No applications yet
               </h3>
-
               <p className="mt-2 text-gray-500">
-                Explore opportunities and apply for your first volunteering
-                activity.
+                Explore opportunities and apply for your first volunteering activity.
               </p>
-
               <Link
                 href="/explore"
                 className="mt-5 inline-block rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
@@ -245,95 +237,86 @@ export default function DashboardPage() {
               {applications.map((application) => {
                 const opportunity = application.opportunity;
                 const status = application.status || "pending";
+                const statusLabel =
+                  status === "accepted"
+                    ? "Approved"
+                    : status === "rejected"
+                      ? "Not accepted"
+                      : "Pending review";
+                const statusClass =
+                  status === "accepted"
+                    ? "bg-green-100 text-green-700"
+                    : status === "rejected"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-amber-100 text-amber-700";
 
                 return (
-                  <div
+                  <article
                     key={application._id}
-                    className="rounded-2xl border border-gray-200 p-6"
+                    className="rounded-2xl border border-gray-200 p-5 sm:p-6"
                   >
-                    <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-
-                      <div>
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                      <div className="min-w-0 flex-1">
                         <h3 className="text-xl font-bold text-gray-900">
-                          {opportunity?.title || "Volunteer Opportunity"}
+                          {opportunity?.title || "Untitled opportunity"}
                         </h3>
 
-                        <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                           {opportunity?.location && (
                             <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                              📍 {opportunity.location}
+                              Location: {opportunity.location}
                             </span>
                           )}
 
                           {opportunity?.date && (
-                            <span className="rounded-full bg-green-50 px-3 py-1 text-green-700">
-                              📅{" "}
-                              {new Date(
-                                opportunity.date
-                              ).toLocaleDateString()}
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                              {new Date(opportunity.date).toLocaleDateString()}
                             </span>
                           )}
 
                           {opportunity?.startTime && (
                             <span className="rounded-full bg-purple-50 px-3 py-1 text-purple-700">
-                              ⏰ {opportunity.startTime}
+                              Time: {opportunity.startTime}
                             </span>
                           )}
                         </div>
-
-                        {status === "accepted" && (
-                          <div className="mt-4 rounded-xl bg-green-50 p-4">
-                            <p className="font-bold text-green-700">
-                              🎉 Your application has been accepted!
-                            </p>
-
-                            <p className="mt-1 text-sm text-green-600">
-                              The NGO has approved your participation in this
-                              volunteering opportunity.
-                            </p>
-                          </div>
-                        )}
-
-                        {status === "rejected" && (
-                          <div className="mt-4 rounded-xl bg-red-50 p-4">
-                            <p className="font-bold text-red-700">
-                              Your application was not accepted.
-                            </p>
-
-                            <p className="mt-1 text-sm text-red-600">
-                              You can explore other volunteering opportunities.
-                            </p>
-                          </div>
-                        )}
                       </div>
 
-                      <div className="shrink-0">
-                        <span
-                          className={`inline-flex rounded-full px-5 py-2 text-sm font-bold capitalize ${
-                            status === "accepted"
-                              ? "bg-green-100 text-green-700"
-                              : status === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {status === "accepted"
-                            ? "🟢 Accepted"
-                            : status === "rejected"
-                            ? "🔴 Rejected"
-                            : "🟡 Pending"}
-                        </span>
-                      </div>
-
+                      <span className={`inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-semibold ${statusClass}`}>
+                        {statusLabel}
+                      </span>
                     </div>
-                  </div>
+
+                    <div className={`mt-5 rounded-xl p-4 ${
+                      status === "accepted"
+                        ? "bg-green-50 text-green-800"
+                        : status === "rejected"
+                          ? "bg-red-50 text-red-800"
+                          : "bg-amber-50 text-amber-800"
+                    }`}>
+                      {status === "accepted"
+                        ? "Your participation has been approved. Thank you for volunteering!"
+                        : status === "rejected"
+                          ? "This application was not accepted. You can explore other opportunities."
+                          : "Your application is awaiting the NGO's decision."}
+                    </div>
+
+                    {opportunity?._id && (
+                      <div className="mt-4">
+                        <Link
+                          href={`/opportunities/${opportunity._id}`}
+                          className="inline-flex rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                          View opportunity
+                        </Link>
+                      </div>
+                    )}
+                  </article>
                 );
               })}
             </div>
           )}
-
         </section>
-
         {/* Account */}
         <section className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">
@@ -384,3 +367,7 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
+
+

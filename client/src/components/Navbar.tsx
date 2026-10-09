@@ -1,10 +1,13 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { api, getUser, logout } from "../lib/api";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isDashboard = ["/dashboard", "/admin", "/ngo"].includes(pathname);
   const [user, setUser] = useState<any>(null);
   const [unread, setUnread] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -76,7 +79,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="absolute left-0 top-0 z-50 w-full border-b border-white/20 bg-white/10 backdrop-blur-md">
+    <nav className={`absolute left-0 top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm`}>
       <div className="mx-3 flex h-20 items-center justify-between rounded-2xl px-4 md:mx-6 md:px-8">
         
         {/* Logo */}
@@ -119,8 +122,6 @@ export default function Navbar() {
                 className="relative rounded-xl p-2 text-2xl text-white transition hover:bg-white/20"
                 aria-label="Notifications"
               >
-                🔔
-
                 {unread > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                     {unread > 99 ? "99+" : unread}
@@ -144,7 +145,7 @@ export default function Navbar() {
               href="/admin"
               className="font-medium text-gray-900 transition hover:text-white"
             >
-              👑 Admin
+              Admin
             </Link>
           )}
 
@@ -183,16 +184,24 @@ export default function Navbar() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileOpen((value) => !value)}
-          className="rounded-xl p-2 text-2xl text-white transition hover:bg-white/20 md:hidden"
+          className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-2xl font-bold text-gray-900 transition hover:bg-gray-200 md:hidden"
           aria-label="Open menu"
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? (
+            <span className="text-xl leading-none">×</span>
+          ) : (
+            <span className="flex w-6 flex-col gap-1" aria-hidden="true">
+              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
+              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
+              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
+            </span>
+          )}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="border-t border-white/20 bg-white/10 px-5 pb-5 pt-3 backdrop-blur-xl md:hidden">
+        <div className={`border-t px-5 pb-5 pt-3 md:hidden ${isDashboard ? "border-white/20 bg-white/10 backdrop-blur-xl" : "border-gray-100 bg-white"}`}>
           <div className="flex flex-col gap-2">
             
             <Link
@@ -200,7 +209,7 @@ export default function Navbar() {
               onClick={closeMobile}
               className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-black/5"
             >
-              🔎 Explore
+              Explore
             </Link>
 
             {user && (
@@ -215,7 +224,7 @@ export default function Navbar() {
                 onClick={closeMobile}
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-black/5"
               >
-                📊 Dashboard
+                Dashboard
               </Link>
             )}
 
@@ -224,7 +233,7 @@ export default function Navbar() {
                 onClick={openNotifications}
                 className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-medium text-gray-700 hover:bg-gray-50"
               >
-                <span>🔔 Notifications</span>
+                <span>Notifications</span>
 
                 {unread > 0 && (
                   <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">
@@ -250,14 +259,14 @@ export default function Navbar() {
                 onClick={closeMobile}
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-black/5"
               >
-                👑 Admin
+                Admin
               </Link>
             )}
 
             {user && (
               <div className="mt-2 border-t border-gray-100 px-4 pt-4">
                 <p className="text-sm text-gray-700">Signed in as</p>
-                <p className="mt-1 font-semibold text-white">
+                <p className="mt-1 font-semibold text-gray-900">
                   {user.name}
                 </p>
               </div>
@@ -318,7 +327,7 @@ function NotificationPanel({
       }
     >
       <div className="mb-3 flex items-center justify-between">
-        <strong className="text-sm">🔔 Notifications</strong>
+        <strong className="text-sm">Notifications</strong>
 
         {unread > 0 && (
           <button
@@ -332,8 +341,7 @@ function NotificationPanel({
 
       {notifications.length === 0 ? (
         <p className="py-6 text-center text-sm text-gray-500">
-          No notifications yet 🔕
-        </p>
+          No notifications yet </p>
       ) : (
         notifications.map((item) => (
           <div
@@ -362,3 +370,5 @@ function NotificationPanel({
     </div>
   );
 }
+
+
