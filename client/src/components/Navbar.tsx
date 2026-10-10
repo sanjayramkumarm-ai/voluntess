@@ -1,76 +1,129 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { api, getUser, logout } from "../lib/api";
-import { photoSrc } from "./ProfilePhoto";
+import { useEffect, useRef, useState } from "react";
+import { api, getUser } from "@/lib/api";
+import { photoSrc } from "@/components/ProfilePhoto";
 import ThemeToggle from "./ThemeToggle";
 
-function Avatar({ user, size = "h-9 w-9" }: { user: any; size?: string }) {
-  const src = photoSrc(user?.profilePhoto);
-  const initial = (user?.name || "V").charAt(0).toUpperCase();
+type MenuName = "bell" | "profile" | "mobile" | null;
+type NavItem = { href: string; label: string };
+type Group = { title: string; items: NavItem[] };
 
-  return src ? (
-    <img
-      src={src}
-      alt={user?.name || "Profile"}
-      className={`${size} rounded-full object-cover ring-2 ring-blue-100`}
-    />
-  ) : (
-    <span
-      className={`${size} flex items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white`}
+const LOGOUT_KEYS = ["token", "user"];
+const REGISTER_HREF = "/register";
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
+
+function pill(active: boolean) {
+  return `rounded-full px-4 py-2 text-[15px] font-medium transition ${focusRing} ${
+    active ? "bg-blue-50 text-blue-600" : "text-gray-800 hover:bg-gray-100"
+  }`;
+}
+
+function menuLink(active: boolean) {
+  return `block rounded-lg px-3 py-2 text-sm font-medium ${focusRing} ${
+    active ? "bg-blue-50 text-blue-600" : "text-gray-800 hover:bg-gray-100"
+  }`;
+}
+
+function Icon({ children }: { children: React.ReactNode }) {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
     >
+      {children}
+    </svg>
+  );
+}
+
+const BellIcon = () => (
+  <Icon>
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </Icon>
+);
+const MenuIcon = () => (
+  <Icon>
+    <path d="M3 6h18M3 12h18M3 18h18" />
+  </Icon>
+);
+const CloseIcon = () => (
+  <Icon>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+);
+const ChevronIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+function Avatar({ user, size = "h-10 w-10" }: { user: any; size?: string }) {
+  const src = photoSrc(user?.profilePhoto);
+  const initial = String(user?.name || "U").charAt(0).toUpperCase();
+  return src ? (
+    <img src={src} alt="" className={`${size} rounded-full object-cover ring-2 ring-white shadow`} />
+  ) : (
+    <span className={`${size} flex items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white`}>
       {initial}
     </span>
   );
 }
 
-function BellIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-6 w-6"
-    >
-      <path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7z" />
-      <path d="M10 20a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
   const [user, setUser] = useState<any>(null);
   const [unread, setUnread] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menu, setMenu] = useState<MenuName>(null);
+
+  const headerRef = useRef<HTMLElement | null>(null);
+  const bellBtnRef = useRef<HTMLButtonElement | null>(null);
+  const profileBtnRef = useRef<HTMLButtonElement | null>(null);
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const loggedIn = Boolean(user);
+  const role: string = user?.role || "";
+  const at = (base: string) => pathname === base || pathname.startsWith(base + "/");
+  const dashboardHref = role === "ngo" ? "/ngo" : role === "admin" ? "/admin" : "/dashboard";
 
   // Reload user and unread count on every page change
   useEffect(() => {
-    const load = async () => {
-      const currentUser = getUser();
-      setUser(currentUser);
-
-      if (currentUser) {
-        try {
-          const data = await api("/notifications/unread-count");
-          setUnread(data.count || 0);
-        } catch {}
-      } else {
-        setUnread(0);
-      }
-    };
-
-    load();
-    setMobileOpen(false);
-    setShowNotifications(false);
+    const current = getUser();
+    setUser(current);
+    setMenu(null);
+    if (!current) {
+      setUnread(0);
+      return;
+    }
+    api("/notifications/unread-count")
+      .then((d: any) => setUnread(d?.count || 0))
+      .catch(() => {});
   }, [pathname]);
+
+  // Poll for new notifications
+  useEffect(() => {
+    if (!loggedIn) return;
+    const t = setInterval(async () => {
+      try {
+        const d: any = await api("/notifications/unread-count");
+        setUnread(d?.count || 0);
+      } catch {}
+    }, 10000);
+    return () => clearInterval(t);
+  }, [loggedIn]);
 
   // Refresh the avatar right after a photo upload
   useEffect(() => {
@@ -83,130 +136,193 @@ export default function Navbar() {
     };
   }, []);
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  // Close on outside click, close on Escape and return focus to the trigger
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) setMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const target = menu === "bell" ? bellBtnRef : menu === "profile" ? profileBtnRef : hamburgerRef;
+      setMenu(null);
+      target.current?.focus();
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
 
-  const linkClass = (href: string) =>
-    `rounded-full px-4 py-2 text-sm font-medium transition ${
-      isActive(href)
-        ? "bg-blue-50 text-blue-700"
-        : "text-gray-800 hover:bg-gray-100"
-    }`;
-
-  const dashboardHref =
-    user?.role === "ngo" ? "/ngo" : user?.role === "admin" ? "/admin" : "/dashboard";
-
-  const openNotifications = async () => {
-    if (!user) return;
-
-    const opening = !showNotifications;
-    setShowNotifications(opening);
-
-    if (opening) {
-      try {
-        const data = await api("/notifications");
-        setNotifications(data || []);
-      } catch {}
+  // Move focus into the profile menu when it opens
+  useEffect(() => {
+    if (menu === "profile") {
+      profileMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     }
-  };
+  }, [menu]);
 
-  const markRead = async (id: string) => {
+  async function toggleBell() {
+    if (!user) return;
+    const opening = menu !== "bell";
+    setMenu(opening ? "bell" : null);
+    if (!opening) return;
+    try {
+      const data: any = await api("/notifications");
+      const list = Array.isArray(data) ? data : [];
+      setNotifications(list);
+      setUnread(list.filter((n: any) => !n.read).length);
+    } catch (err) {
+      console.error("Notifications failed:", err);
+    }
+  }
+
+  async function markRead(id: string) {
     try {
       await api(`/notifications/${id}/read`, { method: "PATCH" });
-      setNotifications((items) =>
-        items.map((item) => (item._id === id ? { ...item, read: true } : item))
-      );
-      setUnread((value) => Math.max(0, value - 1));
+      setNotifications((items) => items.map((i) => (i._id === id ? { ...i, read: true } : i)));
+      setUnread((v) => Math.max(0, v - 1));
     } catch {}
-  };
+  }
 
-  const markAllRead = async () => {
+  async function markAllRead() {
     try {
       await api("/notifications/read-all", { method: "PATCH" });
-      setNotifications((items) => items.map((item) => ({ ...item, read: true })));
+      setNotifications((items) => items.map((i) => ({ ...i, read: true })));
       setUnread(0);
     } catch {}
-  };
+  }
 
-  const closeMobile = () => {
-    setMobileOpen(false);
-    setShowNotifications(false);
-  };
+  function openNotification(item: any) {
+    if (!item.read) markRead(item._id);
+    setMenu(null);
+    if (item.type === "new_message") window.location.href = "/messages";
+  }
+
+  function logout() {
+    try {
+      LOGOUT_KEYS.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+    window.dispatchEvent(new Event("voluntess-user-updated"));
+    setUser(null);
+    setUnread(0);
+    setMenu(null);
+    window.location.href = "/login";
+  }
+
+  function onMenuKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[(i + 1) % items.length]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(i - 1 + items.length) % items.length]?.focus();
+    } else if (e.key === "Tab") {
+      setMenu(null);
+    }
+  }
+
+  // Primary navigation
+  const primary: (NavItem & { active: boolean })[] = [
+    { href: "/", label: "Home", active: pathname === "/" },
+    { href: "/explore", label: "Explore", active: at("/explore") || at("/map") || at("/opportunities") },
+  ];
+  if (loggedIn) {
+    primary.push({
+      href: dashboardHref,
+      label: "Dashboard",
+      active: at(dashboardHref) || (role === "volunteer" && at("/quests")),
+    });
+  }
+
+  // Context switch shown under the header on related pages
+  let sub: { label: string; items: NavItem[] } | null = null;
+  if (at("/explore") || at("/map")) {
+    sub = { label: "View", items: [{ href: "/explore", label: "List" }, { href: "/map", label: "Map" }] };
+  } else if (role === "volunteer" && (at("/dashboard") || at("/quests"))) {
+    sub = {
+      label: "Dashboard",
+      items: [{ href: "/dashboard", label: "Overview" }, { href: "/quests", label: "Challenges & Goals" }],
+    };
+  } else if (loggedIn && (at("/teams") || at("/messages") || at("/reviews"))) {
+    sub = {
+      label: "Community",
+      items: [
+        ...(role === "volunteer" ? [{ href: "/teams", label: "Teams" }] : []),
+        { href: "/messages", label: "Messages" },
+        { href: "/reviews", label: "Reviews" },
+      ],
+    };
+  }
+
+  // Account menu groups (profile dropdown and mobile menu)
+  const groups: Group[] = [];
+  if (loggedIn) {
+    groups.push({
+      title: "Profile",
+      items: [{ href: dashboardHref, label: "My profile" }, { href: "/reviews", label: "Reviews" }],
+    });
+    if (role === "volunteer") {
+      groups.push({ title: "Activity", items: [{ href: "/quests", label: "Challenges & Goals" }] });
+    }
+    groups.push({
+      title: "Community",
+      items: [
+        ...(role === "volunteer" ? [{ href: "/teams", label: "Teams" }] : []),
+        { href: "/messages", label: "Messages" },
+      ],
+    });
+    if (role === "admin") {
+      groups.push({ title: "Admin", items: [{ href: "/admin/ngos", label: "Verify NGOs" }] });
+    }
+  }
+
+  const bellLabel = `Notifications${unread > 0 ? `, ${unread} unread` : ""}`;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur"
+    >
+      <nav aria-label="Primary" className="mx-auto flex h-20 max-w-7xl items-center gap-1 px-4 md:px-8">
         {/* Logo */}
         <Link
           href="/"
-          onClick={closeMobile}
-          className="text-2xl font-extrabold tracking-tight text-gray-900"
+          className={`rounded-md text-2xl font-extrabold tracking-tight text-gray-900 ${focusRing}`}
         >
           Volun<span className="text-blue-600">tess</span>
         </Link>
 
-        {/* Desktop navigation */}
-        <div className="hidden items-center gap-2 md:flex">
-          <Link href="/" className={linkClass("/")}>
-            Home
-          </Link>
+        {/* Primary links (tablet and desktop) */}
+        <ul className="ml-auto mr-1 hidden items-center gap-1 md:flex">
+          {primary.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={item.active ? "page" : undefined}
+                className={pill(item.active)}
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
 
-          <Link href="/explore" className={linkClass("/explore")}>
-            Explore
-          </Link>
-
-          <Link href="/map" className={linkClass("/map")}>
-            Map
-          </Link>
-
-          {user && (
-            <Link href={dashboardHref} className={linkClass(dashboardHref)}>
-              Dashboard
-            </Link>
-          )}
-
-          {user?.role === "volunteer" && (
-            <Link href="/quests" className={linkClass("/quests")}>
-              Quests
-            </Link>
-          )}
-
-          {user?.role === "volunteer" && (
-            <Link href="/teams" className={linkClass("/teams")}>
-              Teams
-            </Link>
-          )}
-
-          {user && (
-            <Link href="/messages" className={linkClass("/messages")}>
-              Messages
-            </Link>
-          )}
-
-          {(user?.role === "volunteer" || user?.role === "ngo") && (
-            <Link href="/reviews" className={linkClass("/reviews")}>
-              Reviews
-            </Link>
-          )}
-
-          {user?.role === "admin" && (
-            <Link href="/admin" className={linkClass("/admin")}>
-              Admin
-            </Link>
-          )}
-
-          {user?.role === "admin" && (
-            <Link href="/admin/ngos" className={linkClass("/admin/ngos")}>
-              Verify NGOs
-            </Link>
-          )}
-
-          {user && (
-            <div className="relative">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Notifications */}
+          {loggedIn && (
+            <div className="sm:relative">
               <button
-                onClick={openNotifications}
-                className="relative rounded-full p-2 text-gray-800 transition hover:bg-gray-100"
-                aria-label="Notifications"
+                ref={bellBtnRef}
+                type="button"
+                onClick={toggleBell}
+                aria-label={bellLabel}
+                aria-haspopup="true"
+                aria-expanded={menu === "bell"}
+                className={`relative rounded-full p-2 text-gray-800 transition hover:bg-gray-100 ${focusRing}`}
               >
                 <BellIcon />
                 {unread > 0 && (
@@ -216,303 +332,256 @@ export default function Navbar() {
                 )}
               </button>
 
-              {showNotifications && (
-                <NotificationPanel
-                  notifications={notifications}
-                  unread={unread}
-                  markRead={markRead}
-                  markAllRead={markAllRead}
-                />
+              {menu === "bell" && (
+                <div
+                  role="region"
+                  aria-label="Notifications"
+                  className="absolute left-3 right-3 top-[4.75rem] max-h-96 overflow-y-auto rounded-2xl border border-gray-100 bg-white p-4 shadow-xl sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <strong className="text-sm text-gray-900">Notifications</strong>
+                    {unread > 0 && (
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className={`rounded text-xs font-semibold text-blue-600 ${focusRing}`}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-gray-500">No notifications yet</p>
+                  ) : (
+                    notifications.map((item) => (
+                      <button
+                        key={item._id}
+                        type="button"
+                        onClick={() => openNotification(item)}
+                        className={`mb-2 block w-full rounded-xl border p-3 text-left ${focusRing} ${
+                          item.read ? "bg-white" : "bg-blue-50"
+                        }`}
+                      >
+                        <span className="block text-sm font-bold text-gray-900">{item.title}</span>
+                        <span className="mt-1 block text-xs leading-5 text-gray-600">{item.message}</span>
+                        {item.createdAt && (
+                          <span className="mt-1 block text-[10px] text-gray-500">
+                            {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           )}
 
           <ThemeToggle />
 
-          {user ? (
-            <>
-              <Link
-                href={dashboardHref}
-                className="ml-2 flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition hover:bg-gray-100"
+          {/* Account (tablet and desktop) */}
+          {loggedIn ? (
+            <div className="relative hidden md:block">
+              <button
+                ref={profileBtnRef}
+                type="button"
+                onClick={() => setMenu(menu === "profile" ? null : "profile")}
+                aria-haspopup="menu"
+                aria-expanded={menu === "profile"}
+                aria-label="Account menu"
+                className={`flex items-center gap-2 rounded-full p-1 pr-2 text-gray-800 transition hover:bg-gray-100 ${focusRing}`}
               >
                 <Avatar user={user} />
-                <span className="max-w-[120px] truncate text-sm font-medium text-gray-800">
-                  {user.name}
-                </span>
-              </Link>
-
-              <button
-                onClick={logout}
-                className="rounded-xl bg-gray-900 px-5 py-3 font-semibold text-white transition hover:bg-gray-800"
-              >
-                Logout
+                <span className="hidden max-w-[7rem] truncate text-[15px] font-medium lg:block">{user?.name}</span>
+                <ChevronIcon />
               </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="rounded-full px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
-              >
-                Log in
-              </Link>
 
+              {menu === "profile" && (
+                <div
+                  ref={profileMenuRef}
+                  role="menu"
+                  aria-label="Account"
+                  onKeyDown={onMenuKeyDown}
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-gray-100 bg-white p-2 shadow-xl"
+                >
+                  <div className="flex items-center gap-3 px-3 py-3">
+                    <Avatar user={user} size="h-11 w-11" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-gray-900">{user?.name}</p>
+                      <p className="text-xs capitalize text-gray-500">{role || "member"}</p>
+                    </div>
+                  </div>
+
+                  {groups.map((g) => (
+                    <div key={g.title} role="none" className="border-t border-gray-100 px-1 py-2">
+                      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        {g.title}
+                      </p>
+                      {g.items.map((item) => (
+                        <Link
+                          key={item.href + item.label}
+                          href={item.href}
+                          role="menuitem"
+                          aria-current={at(item.href) ? "page" : undefined}
+                          className={menuLink(at(item.href))}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+
+                  <div role="none" className="border-t border-gray-100 px-1 pt-2">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={logout}
+                      className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 ${focusRing}`}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden items-center gap-2 md:flex">
+              <Link href="/login" className={pill(at("/login"))}>
+                Login
+              </Link>
               <Link
-                href="/login?mode=register"
-                className="rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700"
+                href={REGISTER_HREF}
+                className={`rounded-full bg-gray-900 px-5 py-2.5 text-[15px] font-semibold text-white transition hover:bg-gray-800 ${focusRing}`}
               >
                 Join free
               </Link>
-            </>
+            </div>
           )}
-        </div>
 
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setMobileOpen((value) => !value)}
-          className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-gray-900 transition hover:bg-gray-200 md:hidden"
-          aria-label="Open menu"
-        >
-          {mobileOpen ? (
-            <span className="block w-6 text-center text-xl leading-6">&times;</span>
-          ) : (
-            <span className="flex w-6 flex-col gap-1" aria-hidden="true">
-              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
-              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
-              <span className="h-0.5 w-6 rounded bg-gray-900"></span>
-            </span>
-          )}
-        </button>
-      </div>
+          {/* Hamburger (mobile) */}
+          <button
+            ref={hamburgerRef}
+            type="button"
+            onClick={() => setMenu(menu === "mobile" ? null : "mobile")}
+            aria-label={menu === "mobile" ? "Close menu" : "Open menu"}
+            aria-expanded={menu === "mobile"}
+            aria-controls="mobile-menu"
+            className={`rounded-full p-2 text-gray-800 transition hover:bg-gray-100 md:hidden ${focusRing}`}
+          >
+            {menu === "mobile" ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Context switch: List|Map, Overview|Challenges & Goals, Community */}
+      {sub && (
+        <div className="border-t border-gray-100">
+          <nav
+            aria-label={sub.label}
+            className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 md:px-8"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{sub.label}</span>
+            <ul className="inline-flex items-center rounded-full bg-gray-100 p-1">
+              {sub.items.map((item) => {
+                const active = at(item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`block rounded-full px-4 py-1.5 text-sm font-semibold transition ${focusRing} ${
+                        active ? "bg-white text-blue-600 shadow-sm" : "text-gray-700 hover:text-gray-900"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      )}
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="max-h-[80vh] overflow-y-auto border-t border-gray-100 bg-white px-5 pb-5 pt-3 md:hidden">
-          <div className="flex flex-col gap-1">
-            <div className="px-2 pb-1"><ThemeToggle withLabel /></div>
-            <Link
-              href="/"
-              onClick={closeMobile}
-              className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-            >
-              Home
-            </Link>
+      {menu === "mobile" && (
+        <div
+          id="mobile-menu"
+          className="absolute inset-x-0 top-full max-h-[calc(100vh-5rem)] overflow-y-auto border-b border-gray-200 bg-white p-4 shadow-lg md:hidden"
+        >
+          <ul className="grid gap-1">
+            {primary.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={item.active ? "page" : undefined}
+                  className={`block rounded-xl px-4 py-3 text-base font-medium ${focusRing} ${
+                    item.active ? "bg-blue-50 text-blue-600" : "text-gray-900 hover:bg-gray-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-            <Link
-              href="/explore"
-              onClick={closeMobile}
-              className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-            >
-              Explore
-            </Link>
-
-            <Link
-              href="/map"
-              onClick={closeMobile}
-              className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-            >
-              Map
-            </Link>
-
-            {user && (
-              <Link
-                href={dashboardHref}
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Dashboard
-              </Link>
-            )}
-
-            {user?.role === "volunteer" && (
-              <Link
-                href="/quests"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Quests
-              </Link>
-            )}
-
-            {user?.role === "volunteer" && (
-              <Link
-                href="/teams"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Teams
-              </Link>
-            )}
-
-            {user && (
-              <Link
-                href="/messages"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Messages
-              </Link>
-            )}
-
-            {(user?.role === "volunteer" || user?.role === "ngo") && (
-              <Link
-                href="/reviews"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Reviews
-              </Link>
-            )}
-
-            {user?.role === "admin" && (
-              <Link
-                href="/admin"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Admin
-              </Link>
-            )}
-
-            {user?.role === "admin" && (
-              <Link
-                href="/admin/ngos"
-                onClick={closeMobile}
-                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Verify NGOs
-              </Link>
-            )}
-
-            {user && (
-              <button
-                onClick={openNotifications}
-                className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-medium text-gray-900 hover:bg-gray-50"
-              >
-                <span>Notifications</span>
-
-                {unread > 0 && (
-                  <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">
-                    {unread}
-                  </span>
-                )}
-              </button>
-            )}
-
-            {showNotifications && user && (
-              <NotificationPanel
-                notifications={notifications}
-                unread={unread}
-                markRead={markRead}
-                markAllRead={markAllRead}
-                mobile
-              />
-            )}
-
-            {user && (
-              <div className="mt-2 flex items-center gap-3 border-t border-gray-100 px-4 pt-4">
+          {loggedIn ? (
+            <>
+              <div className="mt-3 flex items-center gap-3 border-t border-gray-100 px-4 pt-4">
                 <Avatar user={user} size="h-11 w-11" />
                 <div className="min-w-0">
-                  <p className="text-sm text-gray-600">Signed in as</p>
-                  <p className="truncate font-semibold text-gray-900">
-                    {user.name}
-                  </p>
+                  <p className="truncate text-sm font-bold text-gray-900">{user?.name}</p>
+                  <p className="text-xs capitalize text-gray-500">{role || "member"}</p>
                 </div>
               </div>
-            )}
 
-            {user ? (
+              {groups.map((g) => (
+                <div key={g.title} className="mt-3">
+                  <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {g.title}
+                  </p>
+                  {g.items.map((item) => (
+                    <Link
+                      key={item.href + item.label}
+                      href={item.href}
+                      aria-current={at(item.href) ? "page" : undefined}
+                      className={`block rounded-xl px-4 py-3 text-base font-medium ${focusRing} ${
+                        at(item.href) ? "bg-blue-50 text-blue-600" : "text-gray-900 hover:bg-gray-50"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ))}
+
               <button
+                type="button"
                 onClick={logout}
-                className="mt-3 rounded-xl bg-gray-900 px-4 py-3 font-semibold text-white"
+                className={`mt-4 w-full rounded-xl bg-gray-900 px-4 py-3 text-base font-semibold text-white hover:bg-gray-800 ${focusRing}`}
               >
                 Logout
               </button>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={closeMobile}
-                  className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
-                >
-                  Log in
-                </Link>
-
-                <Link
-                  href="/login?mode=register"
-                  onClick={closeMobile}
-                  className="rounded-xl bg-blue-600 px-4 py-3 text-center font-semibold text-white"
-                >
-                  Join free
-                </Link>
-              </>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="mt-4 grid gap-2 border-t border-gray-100 pt-4">
+              <Link
+                href="/login"
+                className={`block rounded-xl border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-900 ${focusRing}`}
+              >
+                Login
+              </Link>
+              <Link
+                href={REGISTER_HREF}
+                className={`block rounded-xl bg-gray-900 px-4 py-3 text-center text-base font-semibold text-white ${focusRing}`}
+              >
+                Join free
+              </Link>
+            </div>
+          )}
         </div>
       )}
-    </nav>
-  );
-}
-
-function NotificationPanel({
-  notifications,
-  unread,
-  markRead,
-  markAllRead,
-  mobile = false,
-}: {
-  notifications: any[];
-  unread: number;
-  markRead: (id: string) => void;
-  markAllRead: () => void;
-  mobile?: boolean;
-}) {
-  return (
-    <div
-      className={
-        mobile
-          ? "mt-2 max-h-80 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50 p-3"
-          : "absolute right-0 top-14 max-h-96 w-80 overflow-y-auto rounded-2xl border border-gray-100 bg-white p-4 shadow-xl"
-      }
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <strong className="text-sm text-gray-900">Notifications</strong>
-
-        {unread > 0 && (
-          <button
-            onClick={markAllRead}
-            className="text-xs font-semibold text-blue-600"
-          >
-            Mark all read
-          </button>
-        )}
-      </div>
-
-      {notifications.length === 0 ? (
-        <p className="py-6 text-center text-sm text-gray-500">
-          No notifications yet
-        </p>
-      ) : (
-        notifications.map((item) => (
-          <div
-            key={item._id}
-            onClick={() => !item.read && markRead(item._id)}
-            className={`mb-2 cursor-pointer rounded-xl border p-3 ${
-              item.read ? "bg-white" : "bg-blue-50"
-            }`}
-          >
-            <p className="text-sm font-bold text-gray-900">{item.title}</p>
-
-            <p className="mt-1 text-xs leading-5 text-gray-600">
-              {item.message}
-            </p>
-
-            {!item.read && (
-              <p className="mt-2 text-[10px] font-bold text-blue-600">NEW</p>
-            )}
-          </div>
-        ))
-      )}
-    </div>
+    </header>
   );
 }
