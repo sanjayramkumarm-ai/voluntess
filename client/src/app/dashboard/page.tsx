@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, getUser, logout } from "@/lib/api";
 import { ProfilePhoto } from "@/components/ProfilePhoto";
+import { EditProfile } from "@/components/EditProfile";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -341,6 +342,16 @@ export default function DashboardPage() {
               }}
             />
           </div>
+
+          <EditProfile
+            user={user}
+            onSaved={(updated) => {
+              const merged = { ...user, ...updated };
+              setUser(merged);
+              localStorage.setItem("voluntess_user", JSON.stringify(merged));
+              window.dispatchEvent(new Event("voluntess-user-updated"));
+            }}
+          />
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-xl bg-gray-50 p-5">

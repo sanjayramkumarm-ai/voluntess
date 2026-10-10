@@ -1,12 +1,28 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
+const BASE_CATEGORIES = [
+  "Environment",
+  "Education",
+  "Health",
+  "Community",
+  "Animals",
+  "Social Welfare",
+];
+
+const iconProps = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+};
+
 function LocationIcon() {
   return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" />
     </svg>
@@ -15,7 +31,7 @@ function LocationIcon() {
 
 function CalendarIcon() {
   return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -26,9 +42,18 @@ function CalendarIcon() {
 
 function ClockIcon() {
   return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg className="h-5 w-5" {...iconProps}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
     </svg>
   );
 }
@@ -37,41 +62,87 @@ export default function ExplorePage() {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
+  const [upcomingOnly, setUpcomingOnly] = useState(false);
+  const [sort, setSort] = useState("default");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const selectedCategory = params.get("category") || "";
+    setCategory(params.get("category") || "");
 
-    setCategory(selectedCategory);
-
-    const query = selectedCategory
-      ? `/opportunities?category=${encodeURIComponent(selectedCategory)}`
-      : "/opportunities";
-
-    api(query)
-      .then((data) => {
-        setOpportunities(data.items || []);
-      })
-      .catch((err) => {
-        setError(err.message || "Unable to load opportunities");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    api("/opportunities")
+      .then((data) => setOpportunities(data.items || []))
+      .catch((err) => setError(err.message || "Unable to load opportunities"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const title = category
-    ? `${category} Opportunities`
-    : "Explore Volunteer Opportunities";
+  const categories = useMemo(() => {
+    const fromData = opportunities.map((o) => o.category).filter(Boolean);
+    return Array.from(new Set([...BASE_CATEGORIES, ...fromData]));
+  }, [opportunities]);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const loc = city.trim().toLowerCase();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const list = opportunities.filter((item) => {
+      if (category && item.category !== category) return false;
+
+      if (q) {
+        const text = `${item.title || ""} ${item.description || ""} ${
+          item.location || ""
+        }`.toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+
+      if (loc && !String(item.location || "").toLowerCase().includes(loc)) {
+        return false;
+      }
+
+      if (upcomingOnly && item.date && new Date(item.date) < today) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (sort === "soonest") {
+      list.sort((a, b) => {
+        const da = a.date ? new Date(a.date).getTime() : Infinity;
+        const db = b.date ? new Date(b.date).getTime() : Infinity;
+        return da - db;
+      });
+    }
+
+    return list;
+  }, [opportunities, search, category, city, upcomingOnly, sort]);
+
+  const hasFilters = Boolean(search || category || city || upcomingOnly);
+
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("");
+    setCity("");
+    setUpcomingOnly(false);
+    setSort("default");
+  };
+
+  const title = category ? `${category} Opportunities` : "Explore Volunteer Opportunities";
   const description = category
     ? `Find meaningful ${category.toLowerCase()} opportunities and make an impact.`
     : "Find meaningful opportunities, connect with NGOs, and make a difference in your community.";
 
+  const fieldClass =
+    "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
   return (
     <main className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-16 text-white">
+      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-14 text-white">
         <div className="mx-auto max-w-7xl">
           <Link
             href="/"
@@ -81,16 +152,85 @@ export default function ExplorePage() {
           </Link>
 
           <p className="mb-3 text-sm font-semibold uppercase tracking-wider">
-            {category ? `${category}` : "Make an impact"}
+            {category || "Make an impact"}
           </p>
 
           <h1 className="text-4xl font-bold md:text-5xl">{title}</h1>
-
           <p className="mt-4 max-w-2xl text-blue-100">{description}</p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-10">
+      <section className="mx-auto max-w-7xl px-6 pt-8">
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="relative md:col-span-2">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <SearchIcon />
+              </span>
+              <input
+                className={`${fieldClass} pl-12`}
+                placeholder="Search by title, description or place"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <select
+              className={fieldClass}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <input
+              className={fieldClass}
+              placeholder="City or location"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-5">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={upcomingOnly}
+                  onChange={(e) => setUpcomingOnly(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                />
+                Upcoming only
+              </label>
+
+              <select
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="default">Sort: Default</option>
+                <option value="soonest">Sort: Soonest date</option>
+              </select>
+            </div>
+
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-8">
         {loading && (
           <div className="rounded-xl bg-white p-8 text-center shadow">
             Loading opportunities...
@@ -103,50 +243,35 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {!loading && !error && opportunities.length === 0 && (
+        {!loading && !error && filtered.length === 0 && (
           <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
             <h2 className="text-2xl font-bold text-gray-900">
-              No opportunities yet
+              {hasFilters ? "No matching opportunities" : "No opportunities yet"}
             </h2>
-
             <p className="mx-auto mt-2 max-w-md text-gray-500">
-              {category
-                ? `There are no ${category.toLowerCase()} opportunities available right now.`
+              {hasFilters
+                ? "Try a different search or clear your filters."
                 : "New volunteering opportunities will appear here when NGOs publish them."}
             </p>
-
-            <Link
-              href="/explore"
-              className="mt-6 inline-block rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-            >
-              View All Opportunities
-            </Link>
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="mt-6 inline-block rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
 
-        {!loading && !error && opportunities.length > 0 && (
+        {!loading && !error && filtered.length > 0 && (
           <div>
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-gray-500">
-                {opportunities.length}{" "}
-                {opportunities.length === 1
-                  ? "opportunity"
-                  : "opportunities"}{" "}
-                found
-              </p>
-
-              {category && (
-                <Link
-                  href="/explore"
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  View all &rarr;
-                </Link>
-              )}
-            </div>
+            <p className="mb-6 text-sm text-gray-500">
+              {filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found
+            </p>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {opportunities.map((item) => (
+              {filtered.map((item) => (
                 <article
                   key={item._id}
                   className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-lg"
@@ -158,9 +283,7 @@ export default function ExplorePage() {
                       {item.category}
                     </span>
 
-                    <h2 className="mt-4 text-xl font-bold text-gray-900">
-                      {item.title}
-                    </h2>
+                    <h2 className="mt-4 text-xl font-bold text-gray-900">{item.title}</h2>
 
                     <p className="mt-3 line-clamp-3 text-sm text-gray-600">
                       {item.description}
@@ -203,4 +326,3 @@ export default function ExplorePage() {
     </main>
   );
 }
-

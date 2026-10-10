@@ -1,4 +1,5 @@
-﻿import { handleAvatarUpload, updateProfilePhoto } from "../controllers/upload";
+import { updateProfile } from "../controllers/profile";
+import { handleAvatarUpload, updateProfilePhoto } from "../controllers/upload";
 import { Router } from "express";
 import { protect, allow } from "../middleware/auth";
 import { wrap } from "../middleware/error";
@@ -76,6 +77,7 @@ r.get("/quests/mine", protect, allow("volunteer"), wrap(quest.mine));
 r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 r.post("/auth/profile-photo", protect, handleAvatarUpload, updateProfilePhoto);
+r.patch("/auth/profile", protect, updateProfile);
 
 export default r;
 
