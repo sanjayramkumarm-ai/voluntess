@@ -32,7 +32,9 @@ export const register = async (req: AuthReq, res: Response) => {
     user: {
       id: user._id,
       name: user.name,
-      role: user.role
+      role: user.role,
+      email: user.email,
+      profilePhoto: user.profilePhoto || ""
     }
   });
 };
@@ -59,10 +61,28 @@ export const login = async (req: AuthReq, res: Response) => {
     user: {
       id: user._id,
       name: user.name,
-      role: user.role
+      role: user.role,
+      email: user.email,
+      profilePhoto: user.profilePhoto || ""
     }
   });
 };
 
-export const me = async (req: AuthReq, res: Response) =>
-  res.json(await User.findById(req.user!.id));
+export const me = async (req: AuthReq, res: Response) => {
+  const user = await User.findById(req.user!.id);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({
+    _id: user._id,
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    city: user.city,
+    skills: user.skills,
+    profilePhoto: user.profilePhoto || ""
+  });
+};
