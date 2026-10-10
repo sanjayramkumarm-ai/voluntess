@@ -1,8 +1,18 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import dynamic from "next/dynamic";
+
+const MapView = dynamic(() => import("@/components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[70vh] items-center justify-center rounded-2xl border border-gray-200 text-gray-500">
+      Loading map...
+    </div>
+  ),
+});
 
 const BASE_CATEGORIES = [
   "Environment",
@@ -68,6 +78,7 @@ export default function ExplorePage() {
   const [city, setCity] = useState("");
   const [upcomingOnly, setUpcomingOnly] = useState(false);
   const [sort, setSort] = useState("default");
+  const [view, setView] = useState<"list" | "map">("list");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -266,11 +277,52 @@ export default function ExplorePage() {
 
         {!loading && !error && filtered.length > 0 && (
           <div>
+            <div className="mb-4 inline-flex rounded-lg border border-gray-200 bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className={`rounded-md px-4 py-2 text-sm font-semibold ${
+                  view === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("map")}
+                className={`rounded-md px-4 py-2 text-sm font-semibold ${
+                  view === "map" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Map
+              </button>
+            </div>
+
             <p className="mb-6 text-sm text-gray-500">
               {filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found
             </p>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {view === "map" && (
+              <div className="mb-6">
+                {(() => {
+                  const pinned = filtered.filter(
+                    (o) => typeof o.latitude === "number" && typeof o.longitude === "number"
+                  );
+                  return (
+                    <>
+                      {pinned.length < filtered.length && (
+                        <p className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
+                          {filtered.length - pinned.length} of these have no map pin yet. Switch to List to see them all.
+                        </p>
+                      )}
+                      <MapView items={pinned} />
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            <div className={view === "map" ? "hidden" : "grid gap-6 md:grid-cols-2 lg:grid-cols-3"}>
               {filtered.map((item) => (
                 <article
                   key={item._id}

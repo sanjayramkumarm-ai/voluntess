@@ -24,7 +24,7 @@ export default function MapPage() {
   useEffect(() => {
     api("/opportunities")
       .then((data: any) => {
-        const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.opportunities) ? data.opportunities : [];
+        const list: any[] = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 

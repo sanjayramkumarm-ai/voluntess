@@ -110,5 +110,5 @@ export default function MapView({ items }: { items: MapItem[] }) {
     }
   }, [items]);
 
-  return <div ref={el} className="h-[70vh] w-full rounded-2xl border border-gray-200" />;
+  return <div ref={el} className="relative z-0 h-[70vh] w-full rounded-2xl border border-gray-200" />;
 }

@@ -82,7 +82,7 @@ export default function LocationPicker({
 
   return (
     <div>
-      <div ref={el} className="h-72 w-full rounded-xl border border-gray-300" />
+      <div ref={el} className="relative z-0 h-72 w-full rounded-xl border border-gray-300" />
       <div className="mt-2 flex items-center justify-between gap-3 text-xs text-gray-500">
         <span>
           {has

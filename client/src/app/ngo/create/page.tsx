@@ -4,6 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import dynamic from "next/dynamic";
+
+const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-72 items-center justify-center rounded-xl border border-gray-300 text-gray-500">
+      Loading map...
+    </div>
+  ),
+});
 
 export default function CreateOpportunityPage() {
   const router = useRouter();
@@ -22,6 +32,10 @@ export default function CreateOpportunityPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
+    lat: null,
+    lng: null,
+  });
 
   function updateField(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -49,6 +63,9 @@ export default function CreateOpportunityPage() {
           startTime: form.startTime,
           endTime: form.endTime,
           capacity: Number(form.capacity),
+          ...(coords.lat !== null && coords.lng !== null
+            ? { latitude: coords.lat, longitude: coords.lng }
+            : {}),
           skills: form.skills
             .split(",")
             .map((skill) => skill.trim())
@@ -165,6 +182,22 @@ export default function CreateOpportunityPage() {
                 required
                 className="w-full rounded-xl border border-gray-300 px-4 py-3"
               />
+            </div>
+
+            <div>
+              <label className="mb-2 block font-semibold text-gray-800">
+                Pin on map (optional)
+              </label>
+
+              <LocationPicker
+                latitude={coords.lat}
+                longitude={coords.lng}
+                onChange={(lat, lng) => setCoords({ lat, lng })}
+              />
+
+              <p className="mt-2 text-sm text-gray-400">
+                A pin helps volunteers find you on the Map page.
+              </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">

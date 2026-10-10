@@ -12,7 +12,9 @@ const schema = z.object({
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   capacity: z.coerce.number().int().min(1),
-  skills: z.array(z.string()).optional()
+  skills: z.array(z.string()).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional()
 });
 
 export const list = async (req: any, res: Response) => {
@@ -74,6 +76,12 @@ export const mine = async (req: AuthReq, res: Response) => {
 
 export const create = async (req: AuthReq, res: Response) => {
   const d = schema.parse(req.body);
+
+  if ((d.latitude === undefined) !== (d.longitude === undefined)) {
+    return res
+      .status(400)
+      .json({ message: "Provide both latitude and longitude, or neither" });
+  }
 
   const item = await Opportunity.create({
     ...d,
