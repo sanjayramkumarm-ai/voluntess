@@ -1,4 +1,4 @@
-﻿import { Response } from "express";
+import { Response } from "express";
 import { z } from "zod";
 import Application from "../models/Application";
 import Opportunity from "../models/Opportunity";
@@ -27,6 +27,21 @@ export const apply = async (req: AuthReq, res: Response) => {
     volunteer: req.user!.id,
     opportunity: opportunity._id
   });
+
+  if (existing && existing.status === "withdrawn") {
+    const taken = await Application.countDocuments({
+      opportunity: opportunity._id,
+      status: "accepted"
+    });
+
+    if (taken >= (opportunity.capacity || 1)) {
+      return res.status(400).json({ message: "All volunteer spots are filled" });
+    }
+
+    existing.status = "pending";
+    await existing.save();
+    return res.status(200).json(existing);
+  }
 
   if (existing) {
     return res
@@ -74,7 +89,7 @@ export const forOpportunity = async (req: AuthReq, res: Response) => {
     return res.status(404).json({ message: "Opportunity not found" });
   }
 
-  const apps = await Application.find({ opportunity: opportunity._id })
+  const apps = await Application.find({ opportunity: opportunity._id, status: { $ne: "withdrawn" } })
     .populate("volunteer", "name email city skills")
     .sort({ createdAt: -1 });
 
@@ -110,6 +125,12 @@ export const decide = async (req: AuthReq, res: Response) => {
 
   if (String(opportunity.organizer) !== String(req.user!.id)) {
     return res.status(403).json({ message: "Not allowed" });
+  }
+
+  if (application.status === "withdrawn") {
+    return res
+      .status(400)
+      .json({ message: "This application was withdrawn by the volunteer" });
   }
 
   const wasAlreadyAccepted = application.status === "accepted";
@@ -181,6 +202,72 @@ export const decide = async (req: AuthReq, res: Response) => {
       relatedApplication: application._id,
       relatedOpportunity: opportunity._id
     });
+  }
+
+  res.json(application);
+};
+
+export const withdraw = async (req: AuthReq, res: Response) => {
+  const application = await Application.findById(req.params.id).populate(
+    "opportunity"
+  );
+
+  if (!application) {
+    return res.status(404).json({ message: "Application not found" });
+  }
+
+  if (String(application.volunteer) !== String(req.user!.id)) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+
+  if (application.status === "withdrawn") {
+    return res.status(400).json({ message: "Already withdrawn" });
+  }
+
+  if (application.status === "rejected") {
+    return res
+      .status(400)
+      .json({ message: "A rejected application cannot be withdrawn" });
+  }
+
+  const wasAccepted = application.status === "accepted";
+
+  application.status = "withdrawn";
+  await application.save();
+
+  const opportunity: any = application.opportunity;
+
+  if (opportunity) {
+    // A freed spot reopens the opportunity
+    try {
+      if (wasAccepted && opportunity.status === "closed") {
+        const accepted = await Application.countDocuments({
+          opportunity: opportunity._id,
+          status: "accepted"
+        });
+
+        if (accepted < (opportunity.capacity || 1)) {
+          opportunity.status = "open";
+          await opportunity.save();
+        }
+      }
+    } catch (error) {
+      console.error("Opportunity reopen failed:", error);
+    }
+
+    // Tell the NGO (never blocks the withdrawal)
+    try {
+      await Notification.create({
+        recipient: opportunity.organizer,
+        type: "application_withdrawn",
+        title: "Application Withdrawn",
+        message: `A volunteer withdrew their application for "${opportunity.title || "your opportunity"}".`,
+        relatedApplication: application._id,
+        relatedOpportunity: opportunity._id
+      });
+    } catch (error) {
+      console.error("Withdraw notification failed:", error);
+    }
   }
 
   res.json(application);

@@ -70,6 +70,23 @@ export default function DashboardPage() {
     }
   }
 
+  async function withdrawApplication(id: string) {
+    if (
+      !window.confirm(
+        "Withdraw this application? Your spot will be given to another volunteer."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api(`/applications/${id}/withdraw`, { method: "PATCH" });
+      await loadApplications(true);
+    } catch (error: any) {
+      setApplicationError(error.message || "Could not withdraw application");
+    }
+  }
+
   if (!user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -238,21 +255,21 @@ export default function DashboardPage() {
                     ? "Approved"
                     : status === "rejected"
                       ? "Not accepted"
-                      : "Pending review";
+                      : status === "withdrawn" ? "Withdrawn" : "Pending review";
 
                 const statusClass =
                   status === "accepted"
                     ? "bg-green-100 text-green-700"
                     : status === "rejected"
                       ? "bg-red-100 text-red-700"
-                      : "bg-amber-100 text-amber-700";
+                      : status === "withdrawn" ? "bg-gray-100 text-gray-600" : "bg-amber-100 text-amber-700";
 
                 const messageClass =
                   status === "accepted"
                     ? "bg-green-50 text-green-800"
                     : status === "rejected"
                       ? "bg-red-50 text-red-800"
-                      : "bg-amber-50 text-amber-800";
+                      : status === "withdrawn" ? "bg-gray-50 text-gray-700" : "bg-amber-50 text-amber-800";
 
                 return (
                   <article
@@ -306,7 +323,7 @@ export default function DashboardPage() {
                         ? "Your participation has been approved. Thank you for volunteering!"
                         : status === "rejected"
                           ? "This application was not accepted. You can explore other opportunities."
-                          : "Your application is awaiting the NGO's decision."}
+                          : status === "withdrawn" ? "You withdrew this application." : "Your application is awaiting the NGO's decision."}
                     </div>
 
                     {opportunity?._id && (
@@ -317,6 +334,16 @@ export default function DashboardPage() {
                         >
                           View opportunity
                         </Link>
+                      </div>
+                    )}
+                  {(status === "pending" || status === "accepted") && (
+                      <div className="mt-4">
+                        <button
+                          onClick={() => withdrawApplication(application._id)}
+                          className="rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-600 hover:bg-red-50"
+                        >
+                          Withdraw application
+                        </button>
                       </div>
                     )}
                   </article>

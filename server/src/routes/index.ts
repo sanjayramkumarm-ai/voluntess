@@ -1,3 +1,4 @@
+import { withdraw } from "../controllers/application";
 import { updateProfile } from "../controllers/profile";
 import { handleAvatarUpload, updateProfilePhoto } from "../controllers/upload";
 import { Router } from "express";
@@ -77,6 +78,7 @@ r.get("/quests/mine", protect, allow("volunteer"), wrap(quest.mine));
 r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 r.post("/auth/profile-photo", protect, handleAvatarUpload, updateProfilePhoto);
+r.patch("/applications/:id/withdraw", protect, withdraw);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 
