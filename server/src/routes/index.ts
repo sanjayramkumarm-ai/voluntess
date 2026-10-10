@@ -1,3 +1,4 @@
+import { getPublicNgo, updateNgoProfile, setVerified } from "../controllers/ngo";
 import { withdraw } from "../controllers/application";
 import { updateProfile } from "../controllers/profile";
 import { handleAvatarUpload, updateProfilePhoto } from "../controllers/upload";
@@ -79,6 +80,9 @@ r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 r.post("/auth/profile-photo", protect, handleAvatarUpload, updateProfilePhoto);
 r.patch("/applications/:id/withdraw", protect, withdraw);
+r.get("/ngos/:id", getPublicNgo);
+r.patch("/auth/ngo-profile", protect, updateNgoProfile);
+r.patch("/ngos/:id/verify", protect, setVerified);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

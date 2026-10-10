@@ -143,6 +143,35 @@ export default function NgoDashboardPage() {
           </div>
         )}
 
+        {user && (
+          <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Your public profile
+              </h2>
+              <p className="mt-1 text-gray-500">
+                Add your logo and description so volunteers can learn about your NGO.
+              </p>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap gap-3">
+              <Link
+                href="/ngo/profile"
+                className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+              >
+                Edit public profile
+              </Link>
+
+              <Link
+                href={`/ngos/${user.id || user._id}`}
+                className="rounded-lg bg-gray-100 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-200"
+              >
+                View public page
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="text-3xl">➕</div>

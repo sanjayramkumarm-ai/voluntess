@@ -1,0 +1,150 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { api, getUser } from "../../../lib/api";
+import ProfilePhoto from "../../../components/ProfilePhoto";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+export default function NgoProfileEditPage() {
+  const [user, setUser] = useState<any>(null);
+  const [ready, setReady] = useState(false);
+  const [about, setAbout] = useState("");
+  const [website, setWebsite] = useState("");
+  const [city, setCity] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const userId = user?.id || user?._id;
+
+  useEffect(() => {
+    const current = getUser();
+    setUser(current);
+
+    const id = current?.id || current?._id;
+    if (!current || current.role !== "ngo" || !id) {
+      setReady(true);
+      return;
+    }
+
+    // Prefill from the public profile
+    api(`/ngos/${id}`)
+      .then((data: any) => {
+        setAbout(data.ngo.about || "");
+        setWebsite(data.ngo.website || "");
+        setCity(data.ngo.city || "");
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, []);
+
+  function syncLocalUser(changes: any) {
+    const updated = { ...user, ...changes };
+    setUser(updated);
+    localStorage.setItem("voluntess_user", JSON.stringify(updated));
+    window.dispatchEvent(new Event("voluntess-user-updated"));
+  }
+
+  async function save() {
+    setBusy(true);
+    setMessage("");
+    try {
+      // ASSUMPTION: the JWT is stored under the "token" key (same as ProfilePhoto)
+      const data = await api("/auth/ngo-profile", { method: "PATCH", body: { about, website, city } });
+      syncLocalUser({ city: data.city });
+      setMessage("Profile saved.");
+    } catch (err: any) {
+      setMessage(err.message || "Could not save");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!ready) {
+    return <main className="mx-auto max-w-2xl px-4 py-16 text-center text-gray-500">Loading...</main>;
+  }
+
+  if (!user || user.role !== "ngo") {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <p className="text-gray-700">This page is for NGO accounts.</p>
+        <Link href="/login" className="mt-4 inline-block font-semibold text-blue-600">
+          Log in
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-extrabold text-gray-900">Public profile</h1>
+        {userId && (
+          <Link href={`/ngos/${userId}`} className="text-sm font-semibold text-blue-600 hover:underline">
+            View public page
+          </Link>
+        )}
+      </div>
+
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-bold text-gray-900">Logo</h2>
+        <ProfilePhoto
+          name={user.name}
+          photo={user.profilePhoto}
+          onUpdated={(path) => syncLocalUser({ profilePhoto: path })}
+        />
+      </section>
+
+      <section className="mt-6 grid gap-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-800">About your NGO</span>
+          <textarea
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            maxLength={1000}
+            rows={6}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-gray-900"
+            placeholder="What does your NGO do, and who do you help?"
+          />
+          <span className="text-xs text-gray-500">{about.length}/1000</span>
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-800">Website</span>
+          <input
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-gray-900"
+            placeholder="https://example.org"
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-800">City</span>
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-gray-900"
+            placeholder="Chennai"
+          />
+        </label>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={save}
+            disabled={busy}
+            className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {busy ? "Saving..." : "Save profile"}
+          </button>
+          {message && <p className="text-sm text-gray-700">{message}</p>}
+        </div>
+
+        <p className="text-xs text-gray-500">
+          The Verified badge is added by the Voluntess team after reviewing your organisation.
+        </p>
+      </section>
+    </main>
+  );
+}

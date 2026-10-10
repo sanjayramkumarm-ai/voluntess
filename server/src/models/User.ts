@@ -62,6 +62,24 @@ const userSchema = new Schema(
       select: false,
     },
 
+    // NGO public profile
+    about: {
+      type: String,
+      default: "",
+      maxlength: 1000,
+    },
+
+    website: {
+      type: String,
+      default: "",
+    },
+
+    // Only an admin can change this (see setVerified)
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+
     // Profile photo URL
     profilePhoto: {
       type: String,
