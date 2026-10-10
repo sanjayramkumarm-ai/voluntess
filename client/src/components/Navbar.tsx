@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { api, getUser, logout } from "../lib/api";
 import { photoSrc } from "./ProfilePhoto";
+import ThemeToggle from "./ThemeToggle";
 
 function Avatar({ user, size = "h-9 w-9" }: { user: any; size?: string }) {
   const src = photoSrc(user?.profilePhoto);
@@ -166,6 +167,12 @@ export default function Navbar() {
             </Link>
           )}
 
+          {(user?.role === "volunteer" || user?.role === "ngo") && (
+            <Link href="/reviews" className={linkClass("/reviews")}>
+              Reviews
+            </Link>
+          )}
+
           {user?.role === "admin" && (
             <Link href="/admin" className={linkClass("/admin")}>
               Admin
@@ -197,6 +204,8 @@ export default function Navbar() {
               )}
             </div>
           )}
+
+          <ThemeToggle />
 
           {user ? (
             <>
@@ -258,6 +267,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="max-h-[80vh] overflow-y-auto border-t border-gray-100 bg-white px-5 pb-5 pt-3 md:hidden">
           <div className="flex flex-col gap-1">
+            <div className="px-2 pb-1"><ThemeToggle withLabel /></div>
             <Link
               href="/"
               onClick={closeMobile}
@@ -291,6 +301,16 @@ export default function Navbar() {
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
               >
                 Quests
+              </Link>
+            )}
+
+            {(user?.role === "volunteer" || user?.role === "ngo") && (
+              <Link
+                href="/reviews"
+                onClick={closeMobile}
+                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
+              >
+                Reviews
               </Link>
             )}
 

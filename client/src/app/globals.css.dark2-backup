@@ -1,0 +1,171 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  @apply bg-white text-ink antialiased;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50;
+}
+
+.input {
+  @apply w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-50;
+}
+
+.card {
+  @apply rounded-2xl border border-gray-100 bg-white p-5 shadow-sm;
+}
+
+/* Voluntess: compact mobile layout */
+@media (max-width: 640px) {
+  main h1 {
+    font-size: 1.65rem !important;
+    line-height: 1.2 !important;
+  }
+
+  main h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.35 !important;
+  }
+
+  main h3 {
+    font-size: 1.05rem !important;
+    line-height: 1.4 !important;
+  }
+
+  main p {
+    line-height: 1.5;
+  }
+
+  main .text-lg {
+    font-size: 0.95rem !important;
+  }
+
+  main .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  main .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  main .text-4xl {
+    font-size: 1.75rem !important;
+  }
+
+  main .p-6,
+  main .p-7,
+  main .p-8,
+  main .p-10,
+  main .p-12 {
+    padding: 1rem !important;
+  }
+
+  main .px-6,
+  main .px-8,
+  main .px-10,
+  main .px-12 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  main .py-8,
+  main .py-10,
+  main .py-12 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  main .gap-8,
+  main .gap-10 {
+    gap: 1rem !important;
+  }
+
+  main button,
+  main a[class*="bg-blue-600"],
+  main a[class*="bg-indigo-600"] {
+    font-size: 0.9rem;
+  }
+}
+/* END Voluntess mobile layout */
+
+
+/* Voluntess: dark mode */
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] body { background-color: #0b1220; color: #e2e8f0; }
+
+html[data-theme="dark"] main.bg-gray-50,
+html[data-theme="dark"] main.bg-slate-50 { background-color: #0b1220; }
+
+html[data-theme="dark"] .bg-white { background-color: #162033; }
+html[data-theme="dark"] .bg-white\/95 { background-color: rgba(11, 18, 32, 0.95); }
+html[data-theme="dark"] .bg-gray-50,
+html[data-theme="dark"] .bg-slate-50 { background-color: #1e2a41; }
+html[data-theme="dark"] .bg-gray-100,
+html[data-theme="dark"] .bg-slate-100 { background-color: #263450; }
+html[data-theme="dark"] .bg-gray-200 { background-color: #2f3f5e; }
+html[data-theme="dark"] .bg-gray-900 { background-color: #3b4a63; }
+
+html[data-theme="dark"] .hover\:bg-gray-50:hover { background-color: #1e2a41; }
+html[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #263450; }
+html[data-theme="dark"] .hover\:bg-gray-200:hover { background-color: #2f3f5e; }
+
+html[data-theme="dark"] .text-gray-900,
+html[data-theme="dark"] .text-slate-900,
+html[data-theme="dark"] .text-gray-800 { color: #f1f5f9; }
+html[data-theme="dark"] .text-gray-700,
+html[data-theme="dark"] .text-slate-700 { color: #e2e8f0; }
+html[data-theme="dark"] .text-gray-600,
+html[data-theme="dark"] .text-slate-600 { color: #cbd5e1; }
+html[data-theme="dark"] .text-gray-500,
+html[data-theme="dark"] .text-gray-400,
+html[data-theme="dark"] .text-slate-500 { color: #94a3b8; }
+
+html[data-theme="dark"] .border-gray-100,
+html[data-theme="dark"] .border-gray-200,
+html[data-theme="dark"] .border-gray-300,
+html[data-theme="dark"] .border-slate-100,
+html[data-theme="dark"] .border-slate-200 { border-color: #2d3b57; }
+html[data-theme="dark"] .divide-slate-100 > * + * { border-color: #2d3b57; }
+
+html[data-theme="dark"] .bg-blue-50 { background-color: rgba(59, 130, 246, 0.16); }
+html[data-theme="dark"] .text-blue-700,
+html[data-theme="dark"] .text-blue-600 { color: #93c5fd; }
+html[data-theme="dark"] .bg-green-50,
+html[data-theme="dark"] .bg-green-100,
+html[data-theme="dark"] .bg-emerald-50 { background-color: rgba(34, 197, 94, 0.16); }
+html[data-theme="dark"] .text-green-700,
+html[data-theme="dark"] .text-emerald-700 { color: #86efac; }
+html[data-theme="dark"] .bg-red-50,
+html[data-theme="dark"] .bg-red-100 { background-color: rgba(239, 68, 68, 0.16); }
+html[data-theme="dark"] .text-red-600,
+html[data-theme="dark"] .text-red-700 { color: #fca5a5; }
+html[data-theme="dark"] .bg-amber-50,
+html[data-theme="dark"] .bg-amber-100,
+html[data-theme="dark"] .bg-yellow-100 { background-color: rgba(245, 158, 11, 0.16); }
+html[data-theme="dark"] .text-amber-700,
+html[data-theme="dark"] .text-yellow-700 { color: #fcd34d; }
+html[data-theme="dark"] .bg-purple-50 { background-color: rgba(168, 85, 247, 0.16); }
+html[data-theme="dark"] .text-purple-700 { color: #d8b4fe; }
+html[data-theme="dark"] .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.16); }
+html[data-theme="dark"] .text-indigo-700,
+html[data-theme="dark"] .text-indigo-600 { color: #a5b4fc; }
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: #0b1220;
+  color: #f1f5f9;
+  border-color: #2d3b57;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: #64748b; }
+/* END Voluntess dark mode */

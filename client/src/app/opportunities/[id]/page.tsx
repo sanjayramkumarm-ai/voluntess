@@ -246,7 +246,7 @@ export default function OpportunityDetailsPage() {
 
               <div className="mt-4 rounded-2xl bg-gray-50 p-4">
                 <p className="font-semibold text-gray-900">
-                  {opportunity.organizer?.name || "NGO"}
+                  {opportunity.organizer?._id ? (<Link href={"/ngos/" + opportunity.organizer._id} className="hover:text-blue-600 hover:underline">{opportunity.organizer?.name || "NGO"}</Link>) : (opportunity.organizer?.name || "NGO")}
                 </p>
 
                 <p className="mt-1 text-sm text-gray-500">

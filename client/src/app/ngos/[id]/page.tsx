@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "../../../lib/api";
 import { photoSrc } from "../../../components/ProfilePhoto";
+import NgoReviews from "../../../components/NgoReviews";
 
 // Change this if your opportunity detail pages live somewhere else
 const OPPORTUNITY_PATH = "/opportunities";
@@ -126,6 +127,8 @@ export default function NgoProfilePage() {
           <p className="mt-2 whitespace-pre-line leading-7 text-gray-700">{ngo.about}</p>
         </section>
       )}
+
+      <NgoReviews ngoId={id} />
 
       <section className="mt-6 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl bg-blue-50 p-4">
