@@ -1,3 +1,5 @@
+import { badges } from "../controllers/badges";
+import { createReview, getPendingReviews, getReceivedReviews, getNgoReviews } from "../controllers/review";
 import { getPublicNgo, updateNgoProfile, setVerified } from "../controllers/ngo";
 import { withdraw } from "../controllers/application";
 import { updateProfile } from "../controllers/profile";
@@ -83,6 +85,11 @@ r.patch("/applications/:id/withdraw", protect, withdraw);
 r.get("/ngos/:id", getPublicNgo);
 r.patch("/auth/ngo-profile", protect, updateNgoProfile);
 r.patch("/ngos/:id/verify", protect, setVerified);
+r.post("/applications/:id/review", protect, createReview);
+r.get("/reviews/pending", protect, getPendingReviews);
+r.get("/reviews/received", protect, getReceivedReviews);
+r.get("/ngos/:id/reviews", getNgoReviews);
+r.get("/quests/badges", protect, badges);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

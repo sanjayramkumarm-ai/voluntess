@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, getUser } from "@/lib/api";
+import BadgeShelf from "@/components/BadgeShelf";
 
 type Quest = {
   id: string;
@@ -208,6 +209,8 @@ export default function QuestsPage() {
             </p>
           </div>
         </section>
+
+        <BadgeShelf />
 
         <section className="mt-7 sm:mt-10">
           <div className="mb-5">
