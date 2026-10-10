@@ -15,6 +15,11 @@ const applicationSchema = new Schema({
     type: String,
     default: ""
   },
+  team: {
+    type: Schema.Types.ObjectId,
+    ref: "Team",
+    default: null
+  },
   status: {
     type: String,
     enum: ["pending", "accepted", "rejected", "withdrawn"],

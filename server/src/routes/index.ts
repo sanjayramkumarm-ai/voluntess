@@ -1,3 +1,4 @@
+import { createTeam, myTeams, joinTeam, leaveTeam, removeMember, disbandTeam, teamApply, acceptTeam } from "../controllers/team";
 import { listNgosForAdmin } from "../controllers/adminNgos";
 import { badges } from "../controllers/badges";
 import { createReview, getPendingReviews, getReceivedReviews, getNgoReviews } from "../controllers/review";
@@ -92,6 +93,14 @@ r.get("/reviews/received", protect, getReceivedReviews);
 r.get("/ngos/:id/reviews", getNgoReviews);
 r.get("/quests/badges", protect, badges);
 r.get("/admin/ngos", protect, listNgosForAdmin);
+r.post("/teams", protect, createTeam);
+r.get("/teams/mine", protect, myTeams);
+r.post("/teams/join", protect, joinTeam);
+r.post("/teams/:id/apply", protect, teamApply);
+r.delete("/teams/:id/leave", protect, leaveTeam);
+r.delete("/teams/:id/members/:userId", protect, removeMember);
+r.delete("/teams/:id", protect, disbandTeam);
+r.post("/opportunities/:id/teams/:teamId/accept", protect, acceptTeam);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

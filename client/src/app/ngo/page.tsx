@@ -113,6 +113,23 @@ export default function NgoDashboardPage() {
     }
   }
 
+  async function acceptTeam(teamId: string) {
+    if (!selectedOpportunity) return;
+    if (!window.confirm("Accept every pending member of this team?")) return;
+
+    try {
+      setMessage("");
+      await api(
+        `/opportunities/${selectedOpportunity._id}/teams/${teamId}/accept`,
+        { method: "POST" }
+      );
+      await viewApplications(selectedOpportunity);
+      setMessage("Whole team accepted.");
+    } catch (error: any) {
+      setMessage(error.message || "Failed to accept team");
+    }
+  }
+
   function closeApplications() {
     setSelectedOpportunity(null);
     setApplications([]);
@@ -428,6 +445,21 @@ export default function NgoDashboardPage() {
                                 )}
                               </div>
                             )}
+
+                          {application.team && status === "pending" && (
+                            <div className="mt-3">
+                              <button
+                                onClick={() =>
+                                  acceptTeam(
+                                    String(application.team?._id || application.team)
+                                  )
+                                }
+                                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                              >
+                                Accept whole team
+                              </button>
+                            </div>
+                          )}
 
                           {application.message && (
                             <div className="mt-4 rounded-xl bg-gray-50 p-4">

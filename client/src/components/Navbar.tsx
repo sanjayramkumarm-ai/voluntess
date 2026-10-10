@@ -171,6 +171,12 @@ export default function Navbar() {
             </Link>
           )}
 
+          {user?.role === "volunteer" && (
+            <Link href="/teams" className={linkClass("/teams")}>
+              Teams
+            </Link>
+          )}
+
           {(user?.role === "volunteer" || user?.role === "ngo") && (
             <Link href="/reviews" className={linkClass("/reviews")}>
               Reviews
@@ -319,6 +325,16 @@ export default function Navbar() {
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
               >
                 Quests
+              </Link>
+            )}
+
+            {user?.role === "volunteer" && (
+              <Link
+                href="/teams"
+                onClick={closeMobile}
+                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
+              >
+                Teams
               </Link>
             )}
 
