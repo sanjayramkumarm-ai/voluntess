@@ -86,3 +86,31 @@ export const me = async (req: AuthReq, res: Response) => {
     profilePhoto: user.profilePhoto || ""
   });
 };
+export const updateProfile = async (req: AuthReq, res: Response) => {
+  const d = z.object({
+    name: z.string().trim().min(2).max(80).optional(),
+    city: z.string().trim().max(80).optional(),
+    skills: z.array(z.string().trim().min(1).max(40)).max(15).optional()
+  }).parse(req.body);
+
+  const user = await User.findByIdAndUpdate(
+    req.user!.id,
+    { $set: d },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({
+    _id: user._id,
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    city: user.city,
+    skills: user.skills,
+    profilePhoto: user.profilePhoto || ""
+  });
+};
