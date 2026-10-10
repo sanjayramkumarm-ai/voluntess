@@ -337,6 +337,7 @@ export default function DashboardPage() {
                 const updated = { ...user, profilePhoto: path };
                 setUser(updated);
                 localStorage.setItem("voluntess_user", JSON.stringify(updated));
+                window.dispatchEvent(new Event("voluntess-user-updated"));
               }}
             />
           </div>
