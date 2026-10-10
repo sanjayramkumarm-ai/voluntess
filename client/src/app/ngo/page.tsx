@@ -461,6 +461,17 @@ export default function NgoDashboardPage() {
                             </div>
                           )}
 
+                          {(status === "pending" || status === "accepted") && (
+                            <div className="mt-3">
+                              <a
+                                href={`/messages?application=${application._id}`}
+                                className="inline-block rounded-lg border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                              >
+                                Message volunteer
+                              </a>
+                            </div>
+                          )}
+
                           {application.message && (
                             <div className="mt-4 rounded-xl bg-gray-50 p-4">
                               <p className="text-xs font-semibold text-gray-400">

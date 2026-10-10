@@ -177,6 +177,12 @@ export default function Navbar() {
             </Link>
           )}
 
+          {user && (
+            <Link href="/messages" className={linkClass("/messages")}>
+              Messages
+            </Link>
+          )}
+
           {(user?.role === "volunteer" || user?.role === "ngo") && (
             <Link href="/reviews" className={linkClass("/reviews")}>
               Reviews
@@ -335,6 +341,16 @@ export default function Navbar() {
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
               >
                 Teams
+              </Link>
+            )}
+
+            {user && (
+              <Link
+                href="/messages"
+                onClick={closeMobile}
+                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
+              >
+                Messages
               </Link>
             )}
 

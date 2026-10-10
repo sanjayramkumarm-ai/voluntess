@@ -1,0 +1,220 @@
+import { Request, Response } from "express";
+import mongoose from "mongoose";
+import { z } from "zod";
+import Application from "../models/Application";
+import Conversation from "../models/Conversation";
+import Message from "../models/Message";
+import Notification from "../models/Notification";
+
+const MAX_PER_MINUTE = 20;
+
+function me(req: Request) {
+  const u = (req as any).user;
+  return { id: String(u?.id || u?._id || ""), role: String(u?.role || "") };
+}
+
+// Loads a conversation and works out which side the caller is. Null if not a participant.
+async function openConversation(req: Request, res: Response) {
+  const user = me(req);
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(404).json({ message: "Conversation not found" });
+    return null;
+  }
+  const convo: any = await Conversation.findById(req.params.id);
+  if (!convo) {
+    res.status(404).json({ message: "Conversation not found" });
+    return null;
+  }
+  const side =
+    String(convo.volunteer) === user.id ? "volunteer" : String(convo.ngo) === user.id ? "ngo" : null;
+  if (!side) {
+    res.status(404).json({ message: "Conversation not found" });
+    return null;
+  }
+  return { convo, side, user };
+}
+
+async function canSendFor(convo: any) {
+  const app: any = await Application.findById(convo.application).select("status");
+  return Boolean(app && (app.status === "pending" || app.status === "accepted"));
+}
+
+// Get or create the conversation for an application
+export const startConversation = async (req: Request, res: Response) => {
+  try {
+    const user = me(req);
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    const app: any = await Application.findById(req.params.id).populate("opportunity", "organizer title");
+    if (!app || !app.opportunity) return res.status(404).json({ message: "Application not found" });
+
+    const volunteerId = String(app.volunteer);
+    const ngoId = String(app.opportunity.organizer);
+    if (user.id !== volunteerId && user.id !== ngoId) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    const existing: any = await Conversation.findOne({ application: app._id });
+    if (existing) return res.json({ _id: existing._id });
+
+    if (app.status !== "pending" && app.status !== "accepted") {
+      return res.status(400).json({ message: "You can only start a chat for a pending or accepted application" });
+    }
+
+    try {
+      const created = await Conversation.create({
+        application: app._id,
+        opportunity: app.opportunity._id,
+        volunteer: volunteerId,
+        ngo: ngoId,
+      });
+      return res.status(201).json({ _id: created._id });
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        const again: any = await Conversation.findOne({ application: app._id });
+        if (again) return res.json({ _id: again._id });
+      }
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Could not open the conversation" });
+  }
+};
+
+export const listConversations = async (req: Request, res: Response) => {
+  try {
+    const user = me(req);
+    const list: any[] = await Conversation.find({ $or: [{ volunteer: user.id }, { ngo: user.id }] })
+      .populate("volunteer", "name")
+      .populate("ngo", "name")
+      .populate("opportunity", "title")
+      .sort({ lastMessageAt: -1 })
+      .limit(100)
+      .lean();
+
+    res.json(
+      list.map((c) => {
+        const isVolunteer = String(c.volunteer?._id) === user.id;
+        return {
+          _id: c._id,
+          otherName: (isVolunteer ? c.ngo?.name : c.volunteer?.name) || "User",
+          opportunityTitle: c.opportunity?.title || "Opportunity",
+          lastMessage: c.lastMessage || "",
+          lastMessageAt: c.lastMessageAt,
+          unread: (isVolunteer ? c.volunteerUnread : c.ngoUnread) || 0,
+        };
+      })
+    );
+  } catch (error) {
+    res.status(500).json({ message: "Could not load conversations" });
+  }
+};
+
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const opened = await openConversation(req, res);
+    if (!opened) return;
+    const { convo, side, user } = opened;
+
+    const rows: any[] = await Message.find({ conversation: convo._id })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+    rows.reverse();
+
+    // Mark as read for the caller
+    await Conversation.updateOne(
+      { _id: convo._id },
+      { $set: side === "volunteer" ? { volunteerUnread: 0 } : { ngoUnread: 0 } }
+    );
+
+    await convo.populate([
+      { path: "volunteer", select: "name" },
+      { path: "ngo", select: "name" },
+      { path: "opportunity", select: "title" },
+    ]);
+
+    res.json({
+      otherName: (side === "volunteer" ? convo.ngo?.name : convo.volunteer?.name) || "User",
+      opportunityTitle: convo.opportunity?.title || "Opportunity",
+      canSend: await canSendFor(convo),
+      messages: rows.map((m) => ({
+        _id: m._id,
+        text: m.text,
+        createdAt: m.createdAt,
+        mine: String(m.sender) === user.id,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Could not load messages" });
+  }
+};
+
+export const sendMessage = async (req: Request, res: Response) => {
+  try {
+    const opened = await openConversation(req, res);
+    if (!opened) return;
+    const { convo, side, user } = opened;
+
+    const parsed = z
+      .object({ text: z.string().trim().min(1, "Message is empty").max(1000, "Message must be 1000 characters or less") })
+      .safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.issues[0]?.message || "Invalid message" });
+    }
+
+    if (!(await canSendFor(convo))) {
+      return res.status(400).json({ message: "This conversation is closed because the application is no longer active" });
+    }
+
+    const recent = await Message.countDocuments({
+      sender: user.id,
+      createdAt: { $gte: new Date(Date.now() - 60 * 1000) },
+    });
+    if (recent >= MAX_PER_MINUTE) {
+      return res.status(429).json({ message: "You're sending messages too fast. Wait a moment." });
+    }
+
+    const created: any = await Message.create({
+      conversation: convo._id,
+      sender: user.id,
+      text: parsed.data.text,
+    });
+
+    const otherUnreadBefore = side === "volunteer" ? convo.ngoUnread : convo.volunteerUnread;
+    await Conversation.updateOne(
+      { _id: convo._id },
+      {
+        $set: { lastMessage: parsed.data.text.slice(0, 120), lastMessageAt: new Date() },
+        $inc: side === "volunteer" ? { ngoUnread: 1 } : { volunteerUnread: 1 },
+      }
+    );
+
+    // Notify only when the other side had nothing unread, so long chats don't spam
+    if (!otherUnreadBefore) {
+      try {
+        await Notification.create({
+          recipient: side === "volunteer" ? convo.ngo : convo.volunteer,
+          type: "new_message",
+          title: "New Message",
+          message: "You have a new message. Open Messages to read it.",
+          relatedApplication: convo.application,
+          relatedOpportunity: convo.opportunity,
+        });
+      } catch (error) {
+        console.error("Message notification failed:", error);
+      }
+    }
+
+    res.status(201).json({
+      _id: created._id,
+      text: created.text,
+      createdAt: created.createdAt,
+      mine: true,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Could not send message" });
+  }
+};

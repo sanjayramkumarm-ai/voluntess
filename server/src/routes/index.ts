@@ -1,3 +1,4 @@
+import { startConversation, listConversations, getMessages, sendMessage, messageOrganizer } from "../controllers/messages";
 import { createTeam, myTeams, joinTeam, leaveTeam, removeMember, disbandTeam, teamApply, acceptTeam } from "../controllers/team";
 import { listNgosForAdmin } from "../controllers/adminNgos";
 import { badges } from "../controllers/badges";
@@ -101,6 +102,11 @@ r.delete("/teams/:id/leave", protect, leaveTeam);
 r.delete("/teams/:id/members/:userId", protect, removeMember);
 r.delete("/teams/:id", protect, disbandTeam);
 r.post("/opportunities/:id/teams/:teamId/accept", protect, acceptTeam);
+r.post("/applications/:id/conversation", protect, startConversation);
+r.get("/conversations", protect, listConversations);
+r.get("/conversations/:id/messages", protect, getMessages);
+r.post("/conversations/:id/messages", protect, sendMessage);
+r.post("/opportunities/:id/conversation", protect, messageOrganizer);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

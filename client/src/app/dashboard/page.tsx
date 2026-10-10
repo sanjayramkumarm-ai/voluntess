@@ -338,6 +338,17 @@ export default function DashboardPage() {
                     )}
                   {(status === "pending" || status === "accepted") && (
                       <div className="mt-4">
+                        <a
+                          href={`/messages?application=${application._id}`}
+                          className="inline-block rounded-lg border border-blue-200 px-4 py-2 font-semibold text-blue-600 hover:bg-blue-50"
+                        >
+                          Message NGO
+                        </a>
+                      </div>
+                    )}
+
+                    {(status === "pending" || status === "accepted") && (
+                      <div className="mt-4">
                         <button
                           onClick={() => withdrawApplication(application._id)}
                           className="rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-600 hover:bg-red-50"

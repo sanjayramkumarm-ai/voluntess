@@ -1,5 +1,6 @@
 "use client";
 
+import MessageOrganizerButton from "@/components/MessageOrganizerButton";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -173,9 +174,12 @@ export default function OpportunityDetailsPage() {
 
             {/* Opportunity Information */}
             <div className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+<h2 className="text-2xl font-bold text-gray-900">
                 📋 Opportunity Details
               </h2>
+<MessageOrganizerButton />
+</div>
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
 
