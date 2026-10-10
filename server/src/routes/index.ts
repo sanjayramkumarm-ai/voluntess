@@ -1,3 +1,4 @@
+import { listNgosForAdmin } from "../controllers/adminNgos";
 import { badges } from "../controllers/badges";
 import { createReview, getPendingReviews, getReceivedReviews, getNgoReviews } from "../controllers/review";
 import { getPublicNgo, updateNgoProfile, setVerified } from "../controllers/ngo";
@@ -90,6 +91,7 @@ r.get("/reviews/pending", protect, getPendingReviews);
 r.get("/reviews/received", protect, getReceivedReviews);
 r.get("/ngos/:id/reviews", getNgoReviews);
 r.get("/quests/badges", protect, badges);
+r.get("/admin/ngos", protect, listNgosForAdmin);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

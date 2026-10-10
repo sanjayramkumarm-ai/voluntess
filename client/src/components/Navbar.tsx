@@ -183,6 +183,12 @@ export default function Navbar() {
             </Link>
           )}
 
+          {user?.role === "admin" && (
+            <Link href="/admin/ngos" className={linkClass("/admin/ngos")}>
+              Verify NGOs
+            </Link>
+          )}
+
           {user && (
             <div className="relative">
               <button
@@ -333,6 +339,16 @@ export default function Navbar() {
                 className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
               >
                 Admin
+              </Link>
+            )}
+
+            {user?.role === "admin" && (
+              <Link
+                href="/admin/ngos"
+                onClick={closeMobile}
+                className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
+              >
+                Verify NGOs
               </Link>
             )}
 
