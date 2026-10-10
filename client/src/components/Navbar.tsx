@@ -155,6 +155,10 @@ export default function Navbar() {
             Explore
           </Link>
 
+          <Link href="/map" className={linkClass("/map")}>
+            Map
+          </Link>
+
           {user && (
             <Link href={dashboardHref} className={linkClass(dashboardHref)}>
               Dashboard
@@ -282,6 +286,14 @@ export default function Navbar() {
               className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
             >
               Explore
+            </Link>
+
+            <Link
+              href="/map"
+              onClick={closeMobile}
+              className="rounded-xl px-4 py-3 font-medium text-gray-900 hover:bg-gray-50"
+            >
+              Map
             </Link>
 
             {user && (
