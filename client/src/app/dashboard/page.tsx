@@ -198,6 +198,13 @@ export default function DashboardPage() {
             >
               Open Voluntess Quest
             </Link>
+
+<Link
+              href="/certificates"
+              className="mt-3 flex w-fit items-center gap-2 rounded-lg border border-indigo-200 px-6 py-3 font-semibold text-indigo-700 hover:bg-indigo-50"
+            >
+              My Certificates
+            </Link>
           </div>
         </section>
 

@@ -1,3 +1,4 @@
+import { listMyCertificates, mySummary, downloadCertificate, setPrivacy, revokeCertificate, ngoOpportunities, ngoCompletionRows, createCompletion, updateCompletion, verifyCompletion, rejectCompletion, issueCertificate, ngoCertificates, publicVerify, publicVerifyLimiter } from "../controllers/certificates";
 import { startConversation, listConversations, getMessages, sendMessage, messageOrganizer } from "../controllers/messages";
 import { createTeam, myTeams, joinTeam, leaveTeam, removeMember, disbandTeam, teamApply, acceptTeam } from "../controllers/team";
 import { listNgosForAdmin } from "../controllers/adminNgos";
@@ -84,6 +85,20 @@ r.get("/quests/mine", protect, allow("volunteer"), wrap(quest.mine));
 r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 r.post("/auth/profile-photo", protect, handleAvatarUpload, updateProfilePhoto);
+r.get("/certificates/my", protect, listMyCertificates);
+r.get("/certificates/my/summary", protect, mySummary);
+r.get("/certificates/:certificateId/download", protect, downloadCertificate);
+r.patch("/certificates/:certificateId/privacy", protect, setPrivacy);
+r.post("/certificates/:certificateId/revoke", protect, revokeCertificate);
+r.get("/ngo/completion-opportunities", protect, ngoOpportunities);
+r.get("/ngo/completions", protect, ngoCompletionRows);
+r.post("/ngo/completions", protect, createCompletion);
+r.patch("/ngo/completions/:completionId", protect, updateCompletion);
+r.post("/ngo/completions/:completionId/verify", protect, verifyCompletion);
+r.post("/ngo/completions/:completionId/reject", protect, rejectCompletion);
+r.post("/ngo/completions/:completionId/issue-certificate", protect, issueCertificate);
+r.get("/ngo/certificates", protect, ngoCertificates);
+r.get("/public/certificates/:certificateId/verify", publicVerifyLimiter, publicVerify);
 r.patch("/applications/:id/withdraw", protect, withdraw);
 r.get("/ngos/:id", getPublicNgo);
 r.patch("/auth/ngo-profile", protect, updateNgoProfile);
