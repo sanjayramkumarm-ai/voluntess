@@ -20,3 +20,8 @@ build/
 *.mobile-backup
 *.background-backup
 *.navbar-backup
+
+server/uploads/
+*.photo-backup
+*.home-backup
+*.layout-backup

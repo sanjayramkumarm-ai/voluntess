@@ -1,5 +1,4 @@
-﻿// @ts-expect-error CSS files are handled by Next.js at build time.
-import "./globals.css";
+﻿import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
@@ -15,9 +14,7 @@ export default function Root({
     <html lang="en">
       <body>
         <Navbar />
-        <main className="mx-auto max-w-6xl px-4 py-8">
-          {children}
-        </main>
+        <div>{children}</div>
       </body>
     </html>
   );

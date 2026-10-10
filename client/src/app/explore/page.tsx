@@ -4,6 +4,35 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
+function LocationIcon() {
+  return (
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg className="mr-1 inline h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
 export default function ExplorePage() {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,20 +77,16 @@ export default function ExplorePage() {
             href="/"
             className="mb-5 inline-block text-sm font-medium text-blue-100 hover:text-white"
           >
-            â† Back to Home
+            &larr; Back to Home
           </Link>
 
           <p className="mb-3 text-sm font-semibold uppercase tracking-wider">
-            {category ? `ðŸŒ± ${category}` : "Make an impact"}
+            {category ? `${category}` : "Make an impact"}
           </p>
 
-          <h1 className="text-4xl font-bold md:text-5xl">
-            {title}
-          </h1>
+          <h1 className="text-4xl font-bold md:text-5xl">{title}</h1>
 
-          <p className="mt-4 max-w-2xl text-blue-100">
-            {description}
-          </p>
+          <p className="mt-4 max-w-2xl text-blue-100">{description}</p>
         </div>
       </section>
 
@@ -80,9 +105,7 @@ export default function ExplorePage() {
 
         {!loading && !error && opportunities.length === 0 && (
           <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
-            <div className="text-5xl">ðŸŒ±</div>
-
-            <h2 className="mt-4 text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               No opportunities yet
             </h2>
 
@@ -117,7 +140,7 @@ export default function ExplorePage() {
                   href="/explore"
                   className="text-sm font-semibold text-blue-600 hover:text-blue-700"
                 >
-                  View all â†’
+                  View all &rarr;
                 </Link>
               )}
             </div>
@@ -144,17 +167,23 @@ export default function ExplorePage() {
                     </p>
 
                     <div className="mt-5 space-y-2 text-sm text-gray-600">
-                      <p>ðŸ“ {item.location}</p>
+                      <p className="flex items-center">
+                        <LocationIcon />
+                        {item.location}
+                      </p>
 
-                      <p>
-                        📅{" "}
+                      <p className="flex items-center">
+                        <CalendarIcon />
                         {item.date
                           ? new Date(item.date).toLocaleDateString()
                           : "Date not specified"}
                       </p>
 
                       {item.startTime && (
-                        <p>â° {item.startTime}</p>
+                        <p className="flex items-center">
+                          <ClockIcon />
+                          {item.startTime}
+                        </p>
                       )}
                     </div>
 
@@ -174,5 +203,4 @@ export default function ExplorePage() {
     </main>
   );
 }
-
 

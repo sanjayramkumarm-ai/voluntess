@@ -27,8 +27,7 @@ app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: "100kb" }));
 app.use(mongoSanitize());
 
-app.use(
-  "/uploads",
+app.use("/uploads", (_req, res, next) => { res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); next(); },
   express.static(path.join(process.cwd(), "uploads"), {
     dotfiles: "deny",
     index: false,
@@ -65,3 +64,4 @@ connectDB()
     console.error("Database connection failed:", error);
     process.exit(1);
   });
+
