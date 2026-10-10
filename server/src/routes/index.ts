@@ -107,6 +107,10 @@ r.get("/conversations", protect, listConversations);
 r.get("/conversations/:id/messages", protect, getMessages);
 r.post("/conversations/:id/messages", protect, sendMessage);
 r.post("/opportunities/:id/conversation", protect, messageOrganizer);
+r.get("/notifications", protect, notification.mine);
+r.get("/notifications/unread-count", protect, notification.unreadCount);
+r.patch("/notifications/read-all", protect, notification.markAllRead);
+r.patch("/notifications/:id/read", protect, notification.markRead);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

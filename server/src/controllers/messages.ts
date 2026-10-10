@@ -240,7 +240,7 @@ export const sendMessage = async (req: Request, res: Response) => {
       }
     );
 
-    if (!otherUnreadBefore) {
+    if (otherUnreadBefore >= 0) {
       try {
         await Notification.create({
           recipient: side === "volunteer" ? convo.ngo : convo.volunteer,

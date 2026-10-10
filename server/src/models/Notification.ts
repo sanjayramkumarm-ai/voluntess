@@ -11,7 +11,7 @@ const notificationSchema = new Schema(
 
     type: {
       type: String,
-      enum: ["application_accepted", "application_rejected"],
+      enum: ["new_message", "application_accepted", "application_rejected"],
       required: true
     },
 

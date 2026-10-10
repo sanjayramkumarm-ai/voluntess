@@ -25,3 +25,6 @@ server/uploads/
 *.photo-backup
 *.home-backup
 *.layout-backup
+
+*-backup
+server/uploads/
