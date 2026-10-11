@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, getUser, logout } from "@/lib/api";
+import NgoAccountCard from "@/components/NgoAccountCard";
+import { NgoHero, NgoOverview } from "@/components/NgoDashboardParts";
 
 export default function NgoDashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -137,21 +139,7 @@ export default function NgoDashboardPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-12 text-white">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-100">
-            NGO Dashboard
-          </p>
-
-          <h1 className="mt-3 text-4xl font-bold">
-            Welcome{user?.name ? ", " + user.name : ""}! 👋
-          </h1>
-
-          <p className="mt-3 text-blue-100">
-            Create opportunities and manage your volunteers.
-          </p>
-        </div>
-      </section>
+      <NgoHero />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         {message && (
@@ -160,91 +148,7 @@ export default function NgoDashboardPage() {
           </div>
         )}
 
-        {user && (
-          <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm sm:flex-row sm:items-center">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Your public profile
-              </h2>
-              <p className="mt-1 text-gray-500">
-                Add your logo and description so volunteers can learn about your NGO.
-              </p>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-3">
-              <Link
-                href="/ngo/profile"
-                className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-              >
-                Edit public profile
-              </Link>
-
-              <Link
-                href={`/ngos/${user.id || user._id}`}
-                className="rounded-lg bg-gray-100 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-200"
-              >
-                View public page
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <div className="text-3xl">➕</div>
-
-            <h2 className="mt-4 text-xl font-bold text-gray-900">
-              Create Opportunity
-            </h2>
-
-            <p className="mt-2 text-gray-500">
-              Publish a new volunteering opportunity for volunteers.
-            </p>
-
-            <Link
-              href="/ngo/create"
-              className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-            >
-              Create Opportunity
-            </Link>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <div className="text-3xl">📋</div>
-
-            <h2 className="mt-4 text-xl font-bold text-gray-900">
-              My Opportunities
-            </h2>
-
-            <p className="mt-2 text-gray-500">
-              {opportunities.length} opportunity
-              {opportunities.length !== 1 ? "ies" : ""} created by your NGO.
-            </p>
-
-            <button
-              onClick={loadOpportunities}
-              className="mt-5 rounded-lg bg-gray-900 px-5 py-3 font-semibold text-white hover:bg-gray-800"
-            >
-              Refresh
-            </button>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <div className="text-3xl">👥</div>
-
-            <h2 className="mt-4 text-xl font-bold text-gray-900">
-              Applications
-            </h2>
-
-            <p className="mt-2 text-gray-500">
-              Review volunteers who apply to your opportunities.
-            </p>
-
-            <p className="mt-5 font-semibold text-blue-600">
-              Select an opportunity below
-            </p>
-          </div>
-        </div>
+        <NgoOverview onRefresh={loadOpportunities} />
 
         <div className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -333,7 +237,7 @@ export default function NgoDashboardPage() {
                       </button>
                 <Link
                   href={`/ngo/attendance?event=${opportunity._id}`}
-                  className="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
                 >
                   Attendance &amp; QR
                 </Link>
@@ -537,40 +441,7 @@ export default function NgoDashboardPage() {
           </div>
         )}
 
-        <div className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900">
-            NGO Account
-          </h2>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl bg-gray-50 p-5">
-              <p className="text-sm text-gray-400">
-                Organization / Name
-              </p>
-
-              <p className="mt-1 font-semibold text-gray-900">
-                {user?.name || "NGO"}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-5">
-              <p className="text-sm text-gray-400">
-                Account Type
-              </p>
-
-              <p className="mt-1 font-semibold capitalize text-gray-900">
-                {user?.role || "NGO"}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={logout}
-            className="mt-6 rounded-lg border border-red-200 px-5 py-3 font-semibold text-red-600 hover:bg-red-50"
-          >
-            Log out
-          </button>
-        </div>
+        <NgoAccountCard />
       </section>
     </main>
   );

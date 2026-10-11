@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("@/components/MapView"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[70vh] items-center justify-center rounded-2xl border border-gray-200 text-gray-500">
+    <div className="flex h-[70vh] items-center justify-center rounded-lg border border-gray-200 bg-white text-sm text-gray-500">
       Loading map...
     </div>
   ),
@@ -23,49 +23,41 @@ const BASE_CATEGORIES = [
   "Social Welfare",
 ];
 
-const iconProps = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2,
+function Svg({ children, className = "h-4 w-4" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      {children}
+    </svg>
+  );
+}
+
+const icons = {
+  pin: <Svg><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></Svg>,
+  clock: <Svg><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Svg>,
+  users: <Svg><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6" /></Svg>,
+  search: <Svg><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></Svg>,
+  list: <Svg><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Svg>,
+  map: <Svg><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14" /></Svg>,
+  arrow: <Svg><path d="M5 12h14M13 6l6 6-6 6" /></Svg>,
 };
 
-function LocationIcon() {
-  return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  );
+function dateParts(value?: string) {
+  const d = value ? new Date(value) : null;
+  if (!d || isNaN(d.getTime())) return { day: "–", month: "TBD", past: false };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return {
+    day: String(d.getDate()),
+    month: d.toLocaleDateString("en-IN", { month: "short" }),
+    past: d.getTime() < today.getTime(),
+  };
 }
 
-function CalendarIcon() {
-  return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg className="mr-1 inline h-4 w-4 text-gray-500" {...iconProps}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg className="h-5 w-5" {...iconProps}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.3-4.3" />
-    </svg>
-  );
+function formatDate(value?: string) {
+  if (!value) return "Date not specified";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "Date not specified";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export default function ExplorePage() {
@@ -128,6 +120,12 @@ export default function ExplorePage() {
         const db = b.date ? new Date(b.date).getTime() : Infinity;
         return da - db;
       });
+    } else if (sort === "latest") {
+      list.sort((a, b) => {
+        const da = a.date ? new Date(a.date).getTime() : -Infinity;
+        const db = b.date ? new Date(b.date).getTime() : -Infinity;
+        return db - da;
+      });
     }
 
     return list;
@@ -143,73 +141,87 @@ export default function ExplorePage() {
     setSort("default");
   };
 
-  const title = category ? `${category} Opportunities` : "Explore Volunteer Opportunities";
+  const title = category ? `${category} opportunities` : "Explore opportunities";
   const description = category
     ? `Find meaningful ${category.toLowerCase()} opportunities and make an impact.`
-    : "Find meaningful opportunities, connect with NGOs, and make a difference in your community.";
+    : "Find volunteering opportunities, connect with NGOs and make a difference in your community.";
 
-  const fieldClass =
-    "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+  const pinned = filtered.filter(
+    (o) => typeof o.latitude === "number" && typeof o.longitude === "number"
+  );
+
+  const chips: { label: string; clear: () => void }[] = [];
+  if (search) chips.push({ label: `Search: ${search}`, clear: () => setSearch("") });
+  if (category) chips.push({ label: category, clear: () => setCategory("") });
+  if (city) chips.push({ label: `Location: ${city}`, clear: () => setCity("") });
+  if (upcomingOnly) chips.push({ label: "Upcoming only", clear: () => setUpcomingOnly(false) });
+
+  const field =
+    "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-14 text-white">
-        <div className="mx-auto max-w-7xl">
-          <Link
-            href="/"
-            className="mb-5 inline-block text-sm font-medium text-blue-100 hover:text-white"
-          >
-            &larr; Back to Home
-          </Link>
-
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider">
-            {category || "Make an impact"}
+    <main className="min-h-screen bg-gray-50 text-gray-900">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs text-gray-500">
+              <Link href="/" className="hover:text-gray-800">Home</Link>
+              <span className="mx-1 text-gray-300">/</span>
+              Explore
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">{description}</p>
+          </div>
+          <p className="text-sm text-gray-500" aria-live="polite">
+            {loading ? "Loading…" : (
+              <>
+                <span className="font-semibold tabular-nums text-gray-900">{filtered.length}</span>{" "}
+                {filtered.length === 1 ? "opportunity" : "opportunities"}
+                {hasFilters ? <span> of {opportunities.length}</span> : null}
+              </>
+            )}
           </p>
-
-          <h1 className="text-4xl font-bold md:text-5xl">{title}</h1>
-          <p className="mt-4 max-w-2xl text-blue-100">{description}</p>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-6 pt-8">
-        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="relative md:col-span-2">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <SearchIcon />
-              </span>
+        {/* Filter bar */}
+        <section aria-label="Filters" className="mt-5 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <label className="relative block">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icons.search}</span>
               <input
-                className={`${fieldClass} pl-12`}
-                placeholder="Search by title, description or place"
+                type="search"
+                className={`${field} w-full pl-9`}
+                placeholder="Search title, description or place"
+                aria-label="Search opportunities"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-            </div>
+            </label>
 
-            <select
-              className={fieldClass}
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
+            <select className={field} aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="">All categories</option>
               {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
 
             <input
-              className={fieldClass}
+              className={field}
               placeholder="City or location"
+              aria-label="City or location"
               value={city}
               onChange={(e) => setCity(e.target.value)}
             />
-          </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-5">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+            <select className={field} aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)}>
+              <option value="default">Sort: Default</option>
+              <option value="soonest">Sort: Soonest first</option>
+              <option value="latest">Sort: Latest first</option>
+            </select>
+
+            <div className="flex items-center justify-between gap-3 lg:justify-end">
+              <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-gray-700">
                 <input
                   type="checkbox"
                   checked={upcomingOnly}
@@ -219,162 +231,185 @@ export default function ExplorePage() {
                 Upcoming only
               </label>
 
-              <select
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="default">Sort: Default</option>
-                <option value="soonest">Sort: Soonest date</option>
-              </select>
-            </div>
-
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-8">
-        {loading && (
-          <div className="rounded-xl bg-white p-8 text-center shadow">
-            Loading opportunities...
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {hasFilters ? "No matching opportunities" : "No opportunities yet"}
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-gray-500">
-              {hasFilters
-                ? "Try a different search or clear your filters."
-                : "New volunteering opportunities will appear here when NGOs publish them."}
-            </p>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-6 inline-block rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div>
-            <div className="mb-4 inline-flex rounded-lg border border-gray-200 bg-white p-1">
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold ${
-                  view === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                List
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("map")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold ${
-                  view === "map" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Map
-              </button>
-            </div>
-
-            <p className="mb-6 text-sm text-gray-500">
-              {filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found
-            </p>
-
-            {view === "map" && (
-              <div className="mb-6">
-                {(() => {
-                  const pinned = filtered.filter(
-                    (o) => typeof o.latitude === "number" && typeof o.longitude === "number"
-                  );
-                  return (
-                    <>
-                      {pinned.length < filtered.length && (
-                        <p className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
-                          {filtered.length - pinned.length} of these have no map pin yet. Switch to List to see them all.
-                        </p>
-                      )}
-                      <MapView items={pinned} />
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-
-            <div className={view === "map" ? "hidden" : "grid gap-6 md:grid-cols-2 lg:grid-cols-3"}>
-              {filtered.map((item) => (
-                <article
-                  key={item._id}
-                  className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-lg"
+              <div className="inline-flex rounded-md border border-gray-300 bg-gray-50 p-0.5" role="group" aria-label="View">
+                <button
+                  type="button"
+                  onClick={() => setView("list")}
+                  aria-pressed={view === "list"}
+                  className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium ${view === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
                 >
-                  <div className="h-2 bg-blue-600" />
+                  {icons.list} List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("map")}
+                  aria-pressed={view === "map"}
+                  className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium ${view === "map" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
+                >
+                  {icons.map} Map
+                </button>
+              </div>
+            </div>
+          </div>
 
-                  <div className="p-6">
-                    <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                      {item.category}
-                    </span>
+          {chips.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+              {chips.map((c) => (
+                <span key={c.label} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 py-1 pl-3 pr-1.5 text-xs font-medium text-blue-700">
+                  {c.label}
+                  <button
+                    type="button"
+                    onClick={c.clear}
+                    aria-label={`Remove filter ${c.label}`}
+                    className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-100"
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              <button onClick={clearFilters} className="ml-1 text-xs font-semibold text-gray-500 hover:text-gray-900">
+                Clear all
+              </button>
+            </div>
+          )}
+        </section>
 
-                    <h2 className="mt-4 text-xl font-bold text-gray-900">{item.title}</h2>
-
-                    <p className="mt-3 line-clamp-3 text-sm text-gray-600">
-                      {item.description}
-                    </p>
-
-                    <div className="mt-5 space-y-2 text-sm text-gray-600">
-                      <p className="flex items-center">
-                        <LocationIcon />
-                        {item.location}
-                      </p>
-
-                      <p className="flex items-center">
-                        <CalendarIcon />
-                        {item.date
-                          ? new Date(item.date).toLocaleDateString()
-                          : "Date not specified"}
-                      </p>
-
-                      {item.startTime && (
-                        <p className="flex items-center">
-                          <ClockIcon />
-                          {item.startTime}
-                        </p>
-                      )}
+        {/* Results */}
+        <section className="mt-5">
+          {loading && (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Loading">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-white p-5">
+                  <div className="flex gap-4">
+                    <div className="h-14 w-14 rounded-md bg-gray-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-1/3 rounded bg-gray-100" />
+                      <div className="h-4 w-2/3 rounded bg-gray-200" />
                     </div>
-
-                    <Link
-                      href={`/opportunities/${item._id}`}
-                      className="mt-6 block rounded-lg bg-blue-600 px-4 py-3 text-center font-semibold text-white hover:bg-blue-700"
-                    >
-                      View Opportunity
-                    </Link>
                   </div>
-                </article>
+                  <div className="mt-5 space-y-2">
+                    <div className="h-3 rounded bg-gray-100" />
+                    <div className="h-3 w-5/6 rounded bg-gray-100" />
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        )}
-      </section>
+          )}
+
+          {!loading && error && (
+            <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && filtered.length === 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white px-6 py-14 text-center">
+              <p className="text-sm font-semibold text-gray-800">
+                {hasFilters ? "No matching opportunities" : "No opportunities yet"}
+              </p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
+                {hasFilters
+                  ? "Try a different search or clear your filters."
+                  : "New volunteering opportunities will appear here when NGOs publish them."}
+              </p>
+              {hasFilters && (
+                <button onClick={clearFilters} className="mt-4 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black">
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {!loading && !error && filtered.length > 0 && (
+            <>
+              {view === "map" && (
+                <div className="mb-4">
+                  {pinned.length < filtered.length && (
+                    <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+                      {filtered.length - pinned.length} of these have no map pin yet. Switch to List to see them all.
+                    </p>
+                  )}
+                  <MapView items={pinned} />
+                </div>
+              )}
+
+              <div className={view === "map" ? "hidden" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}>
+                {filtered.map((item) => {
+                  const p = dateParts(item.date);
+                  return (
+                    <article
+                      key={item._id}
+                      className="group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-md ${p.past ? "bg-gray-100 text-gray-500" : "bg-blue-50 text-blue-700"}`}>
+                          <span className="text-lg font-bold leading-none tabular-nums">{p.day}</span>
+                          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide">{p.month}</span>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.category && (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-gray-600">
+                                {item.category}
+                              </span>
+                            )}
+                            {item.date && (
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${p.past ? "text-gray-400" : "text-emerald-600"}`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${p.past ? "bg-gray-300" : "bg-emerald-500"}`} />
+                                {p.past ? "Past" : "Upcoming"}
+                              </span>
+                            )}
+                          </div>
+                          <h2 className="mt-1.5 break-words text-base font-semibold leading-snug text-gray-900">
+                            {item.title}
+                          </h2>
+                        </div>
+                      </div>
+
+                      <p className="mt-4 line-clamp-2 text-sm leading-6 text-gray-600">
+                        {item.description}
+                      </p>
+
+                      <ul className="mt-4 space-y-1.5 text-sm text-gray-600">
+                        {item.location && (
+                          <li className="flex items-center gap-2">
+                            <span className="text-gray-400">{icons.pin}</span>
+                            <span className="min-w-0 truncate">{item.location}</span>
+                          </li>
+                        )}
+                        <li className="flex items-center gap-2">
+                          <span className="text-gray-400">{icons.clock}</span>
+                          <span className="tabular-nums">
+                            {formatDate(item.date)}
+                            {item.startTime ? ` · ${item.startTime}` : ""}
+                          </span>
+                        </li>
+                        {item.capacity ? (
+                          <li className="flex items-center gap-2">
+                            <span className="text-gray-400">{icons.users}</span>
+                            <span>{item.capacity} volunteers needed</span>
+                          </li>
+                        ) : null}
+                      </ul>
+
+                      <div className="mt-auto border-t border-gray-100 pt-4">
+                        <Link
+                          href={`/opportunities/${item._id}`}
+                          className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                          View details
+                          <span className="transition group-hover:translate-x-0.5">{icons.arrow}</span>
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
