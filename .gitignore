@@ -32,3 +32,6 @@ server/uploads/
 *.certs-backup
 
 *.attendance-backup
+responsive-audit.txt
+notif-audit.txt
+client/responsive-audit.txt

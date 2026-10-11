@@ -331,6 +331,12 @@ export default function NgoDashboardPage() {
                       >
                         👥 Applicants
                       </button>
+                <Link
+                  href={`/ngo/attendance?event=${opportunity._id}`}
+                  className="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700"
+                >
+                  Attendance &amp; QR
+                </Link>
 
                       <button
                         onClick={() =>

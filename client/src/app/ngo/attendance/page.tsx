@@ -56,7 +56,7 @@ export default function NgoAttendancePage() {
     const u = getUser();
     setUser(u);
     setReady(true);
-    if (u?.role === "ngo") api("/ngo/completion-opportunities").then((o: any) => setOpps(Array.isArray(o) ? o : [])).catch((e: any) => setError(e.message));
+    if (u?.role === "ngo") api("/ngo/completion-opportunities").then((o: any) => { setOpps(Array.isArray(o) ? o : []); const ev = new URLSearchParams(window.location.search).get("event"); if (ev && /^[a-f0-9]{24}$/i.test(ev)) setOppId(ev); }).catch((e: any) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -223,6 +223,36 @@ export default function NgoAttendancePage() {
                 {qr.state === "active" && <button onClick={() => open("revoke")} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600">Revoke</button>}
               </div>
               <p className="mt-3 text-xs text-gray-500">A new QR code makes the old printed one stop working.</p>
+
+              {qr.state === "active" && qr.checkinUrl && (
+                <div className="mt-4">
+                  <label htmlFor="checkin-link" className="block text-sm font-semibold text-gray-700">Check-in link</label>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      id="checkin-link"
+                      readOnly
+                      value={qr.checkinUrl}
+                      onFocus={(e) => e.currentTarget.select()}
+                      className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(qr.checkinUrl);
+                          setMsg("Check-in link copied.");
+                        } catch {
+                          setMsg("Copy failed. Click the link box and press Ctrl+C.");
+                        }
+                      }}
+                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      Copy link
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Volunteers can paste this on the Scan page. Anyone with it still needs an approved application.</p>
+                </div>
+              )}
             </div>
           </section>
 
