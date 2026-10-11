@@ -129,6 +129,18 @@ export default function MessagesPage() {
     }
   }
 
+    // Opening a conversation clears its message notifications
+  useEffect(() => {
+    if (!active) return;
+    const clear = () =>
+      api("/notifications/messages", { method: "DELETE" })
+        .then(() => window.dispatchEvent(new Event("voluntess-notifications-changed")))
+        .catch(() => {});
+    clear();
+    const t = setInterval(clear, 5000);
+    return () => clearInterval(t);
+  }, [active]);
+
   if (!ready) {
     return <main className="mx-auto max-w-5xl px-4 py-16 text-center text-gray-500">Loading...</main>;
   }

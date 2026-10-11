@@ -126,6 +126,7 @@ r.get("/notifications", protect, notification.mine);
 r.get("/notifications/unread-count", protect, notification.unreadCount);
 r.patch("/notifications/read-all", protect, notification.markAllRead);
 r.patch("/notifications/:id/read", protect, notification.markRead);
+r.delete("/notifications/messages", protect, notification.clearMessageNotifications);
 r.patch("/auth/me", protect, updateProfile);
 r.patch("/auth/profile", protect, updateProfile);
 

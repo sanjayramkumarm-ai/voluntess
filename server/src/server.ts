@@ -1,4 +1,4 @@
-﻿import "dotenv/config";
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -23,7 +23,17 @@ const allowedOrigins = [
   "http://10.76.32.66:3000",
 ];
 
-app.use(cors({ origin: allowedOrigins }));
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin as any)) return cb(null, true);
+      // Development only: allow phones and PCs on the local network
+      const lan = /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
+      if (process.env.NODE_ENV !== "production" && lan.test(origin)) return cb(null, true);
+      cb(null, false);
+    },
+  })
+);
 app.use(express.json({ limit: "100kb" }));
 app.use(mongoSanitize());
 

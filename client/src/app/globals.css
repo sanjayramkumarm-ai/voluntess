@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -228,3 +228,9 @@ html[data-theme="dark"] .text-red-800 { color: #fca5a5; }
 html[data-theme="dark"] .text-slate-800,
 html[data-theme="dark"] .text-gray-950 { color: #f1f5f9; }
 /* END Voluntess dark mode fixes */
+
+/* responsive-safety */
+html, body { max-width: 100%; overflow-x: clip; }
+main img, main video { max-width: 100%; }
+main { overflow-wrap: break-word; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }

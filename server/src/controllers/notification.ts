@@ -1,3 +1,4 @@
+import NotificationModel from "../models/Notification";
 import { Response } from "express";
 import Notification from "../models/Notification";
 import { AuthReq } from "../middleware/auth";
@@ -70,4 +71,17 @@ export const markAllRead = async (
   res.json({
     message: "All notifications marked as read"
   });
+};
+
+export const clearMessageNotifications = async (req: any, res: any) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const result = await NotificationModel.deleteMany({
+      recipient: userId,
+      type: "new_message"
+    });
+    res.json({ deleted: result.deletedCount || 0 });
+  } catch (error) {
+    res.status(500).json({ message: "Could not clear notifications" });
+  }
 };

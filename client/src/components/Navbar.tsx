@@ -11,8 +11,8 @@ type MenuName = "bell" | "profile" | "mobile" | null;
 type NavItem = { href: string; label: string };
 type Group = { title: string; items: NavItem[] };
 
-const LOGOUT_KEYS = ["token", "user"];
-const REGISTER_HREF = "/register";
+const LOGOUT_KEYS = ["voluntess_token", "voluntess_user", "token", "user"];
+const REGISTER_HREF = "/login?mode=register";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
@@ -130,9 +130,11 @@ export default function Navbar() {
     const refresh = () => setUser(getUser());
     window.addEventListener("voluntess-user-updated", refresh);
     window.addEventListener("storage", refresh);
+      window.addEventListener("voluntess-notifications-changed", refresh);
     return () => {
       window.removeEventListener("voluntess-user-updated", refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener("voluntess-notifications-changed", refresh);
     };
   }, []);
 
@@ -311,7 +313,7 @@ export default function Navbar() {
           ))}
         </ul>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 md:ml-0">
           {/* Notifications */}
           {loggedIn && (
             <div className="sm:relative">

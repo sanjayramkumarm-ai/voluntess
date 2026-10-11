@@ -230,7 +230,7 @@ export const getNgoReviews = async (req: Request, res: Response) => {
     if (!mongoose.isValidObjectId(id)) {
       return res.status(404).json({ message: "NGO not found" });
     }
-    const ngoId = new mongoose.Types.ObjectId(id);
+    const ngoId = new mongoose.Types.ObjectId(String(Array.isArray(id) ? id[0] : id));
     res.json(await summarize({ reviewee: ngoId, direction: "volunteer_to_ngo" }));
   } catch (error) {
     res.status(500).json({ message: "Could not load reviews" });
