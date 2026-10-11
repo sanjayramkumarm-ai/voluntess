@@ -68,7 +68,7 @@ export default function NgoCompletionsPage() {
           <h1 className="text-3xl font-extrabold text-gray-900">Completion and certificates</h1>
           <p className="mt-1 text-gray-600">Record attendance, confirm service hours, then issue certificates.</p>
         </div>
-        <Link href="/ngo" className="text-sm font-semibold text-blue-600 hover:underline">Back to NGO dashboard</Link>
+        <div className="flex gap-4"><Link href="/ngo/attendance" className="text-sm font-semibold text-blue-600 hover:underline">Attendance and QR</Link><Link href="/ngo" className="text-sm font-semibold text-blue-600 hover:underline">Back to NGO dashboard</Link></div>
       </div>
 
       {error && <div className="mt-6"><ErrorState message={error} onRetry={loadRows} /></div>}

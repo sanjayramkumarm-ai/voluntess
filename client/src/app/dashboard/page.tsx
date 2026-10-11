@@ -205,6 +205,13 @@ export default function DashboardPage() {
             >
               My Certificates
             </Link>
+
+<Link
+              href="/attendance"
+              className="mt-3 flex w-fit items-center gap-2 rounded-lg border border-indigo-200 px-6 py-3 font-semibold text-indigo-700 hover:bg-indigo-50"
+            >
+              Attendance and check-in
+            </Link>
           </div>
         </section>
 

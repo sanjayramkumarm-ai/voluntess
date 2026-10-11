@@ -30,3 +30,5 @@ server/uploads/
 server/uploads/
 
 *.certs-backup
+
+*.attendance-backup

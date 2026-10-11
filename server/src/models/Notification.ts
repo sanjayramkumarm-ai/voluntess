@@ -11,7 +11,17 @@ const notificationSchema = new Schema(
 
     type: {
       type: String,
-      enum: ["new_message", "application_accepted", "application_rejected"],
+      enum: [
+        "new_message",
+        "application_accepted",
+        "application_rejected",
+        "application_withdrawn",
+        "certificate_issued",
+        "attendance_recorded",
+        "hours_review_needed",
+        "hours_approved",
+        "hours_rejected"
+      ],
       required: true
     },
 

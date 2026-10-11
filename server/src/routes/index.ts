@@ -1,3 +1,4 @@
+import { scanLimiter, checkinInfo, checkInHandler, checkOutHandler, myAttendance, eventOverview, qrInfo, qrPng, qrPdf, qrRotate, qrRevoke, exportCsv, manualAttendance, correctTimes, reviewAttendance, reviewAttempt } from "../controllers/attendance";
 import { listMyCertificates, mySummary, downloadCertificate, setPrivacy, revokeCertificate, ngoOpportunities, ngoCompletionRows, createCompletion, updateCompletion, verifyCompletion, rejectCompletion, issueCertificate, ngoCertificates, publicVerify, publicVerifyLimiter } from "../controllers/certificates";
 import { startConversation, listConversations, getMessages, sendMessage, messageOrganizer } from "../controllers/messages";
 import { createTeam, myTeams, joinTeam, leaveTeam, removeMember, disbandTeam, teamApply, acceptTeam } from "../controllers/team";
@@ -85,6 +86,21 @@ r.get("/quests/mine", protect, allow("volunteer"), wrap(quest.mine));
 r.get("/quests/leaderboard", wrap(quest.leaderboard));
 
 r.post("/auth/profile-photo", protect, handleAvatarUpload, updateProfilePhoto);
+r.get("/checkin/:token", protect, scanLimiter, checkinInfo);
+r.post("/checkin/:token/check-in", protect, scanLimiter, checkInHandler);
+r.post("/checkin/:token/check-out", protect, scanLimiter, checkOutHandler);
+r.get("/attendance/my", protect, myAttendance);
+r.get("/ngo/attendance/event/:opportunityId", protect, eventOverview);
+r.get("/ngo/attendance/event/:opportunityId/qr", protect, qrInfo);
+r.get("/ngo/attendance/event/:opportunityId/qr.png", protect, qrPng);
+r.get("/ngo/attendance/event/:opportunityId/qr.pdf", protect, qrPdf);
+r.post("/ngo/attendance/event/:opportunityId/qr/rotate", protect, qrRotate);
+r.post("/ngo/attendance/event/:opportunityId/qr/revoke", protect, qrRevoke);
+r.get("/ngo/attendance/event/:opportunityId/export.csv", protect, exportCsv);
+r.post("/ngo/attendance/manual", protect, scanLimiter, manualAttendance);
+r.patch("/ngo/attendance/records/:attendanceId/times", protect, correctTimes);
+r.post("/ngo/attendance/records/:attendanceId/review", protect, reviewAttendance);
+r.post("/ngo/attendance/attempts/:attemptId/review", protect, reviewAttempt);
 r.get("/certificates/my", protect, listMyCertificates);
 r.get("/certificates/my/summary", protect, mySummary);
 r.get("/certificates/:certificateId/download", protect, downloadCertificate);
