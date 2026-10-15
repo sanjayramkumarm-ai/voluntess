@@ -49,11 +49,11 @@ export default function NgoAccountCard() {
   }
 
   const tile = "rounded-xl bg-gray-50 p-4";
-  const link = "flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50";
+  const link = "flex min-w-0 items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50";
 
   return (
     <section aria-label="NGO account" className="w-full rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
         <div>
           <div className="flex items-center gap-4">
             {src ? (
@@ -81,7 +81,7 @@ export default function NgoAccountCard() {
         </div>
 
         <div className="min-w-0">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className={tile}><p className="text-xs text-gray-500">Opportunities</p><p className="mt-1 text-2xl font-extrabold text-gray-900">{stats ? stats.events : "-"}</p></div>
             <div className={tile}><p className="text-xs text-gray-500">Approved volunteers</p><p className="mt-1 text-2xl font-extrabold text-gray-900">{stats ? stats.volunteers : "-"}</p></div>
             <div className={tile}><p className="text-xs text-gray-500">Certificates issued</p><p className="mt-1 text-2xl font-extrabold text-blue-600">{stats ? stats.certificates : "-"}</p></div>
@@ -89,12 +89,12 @@ export default function NgoAccountCard() {
 
           <h3 className="mt-6 text-sm font-bold uppercase tracking-wide text-gray-500">Shortcuts</h3>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <Link href="/ngo/profile" className={link}>Edit public profile <span aria-hidden>&rarr;</span></Link>
-            <Link href={id ? `/ngos/${id}` : "/ngo"} className={link}>View public page <span aria-hidden>&rarr;</span></Link>
-            <Link href="/ngo/attendance" className={link}>Attendance &amp; QR <span aria-hidden>&rarr;</span></Link>
-            <Link href="/ngo/completions" className={link}>Completions &amp; certificates <span aria-hidden>&rarr;</span></Link>
-            <Link href="/messages" className={link}>Messages <span aria-hidden>&rarr;</span></Link>
-            <Link href="/reviews" className={link}>Reviews <span aria-hidden>&rarr;</span></Link>
+            <Link href="/ngo/profile" className={link}><span className="min-w-0 break-words">Edit public profile</span> <span aria-hidden>&rarr;</span></Link>
+            <Link href={id ? `/ngos/${id}` : "/ngo"} className={link}><span className="min-w-0 break-words">View public page</span> <span aria-hidden>&rarr;</span></Link>
+            <Link href="/ngo/attendance" className={link}><span className="min-w-0 break-words">Attendance &amp; QR</span> <span aria-hidden>&rarr;</span></Link>
+            <Link href="/ngo/completions" className={link}><span className="min-w-0 break-words">Completions &amp; certificates</span> <span aria-hidden>&rarr;</span></Link>
+            <Link href="/messages" className={link}><span className="min-w-0 break-words">Messages</span> <span aria-hidden>&rarr;</span></Link>
+            <Link href="/reviews" className={link}><span className="min-w-0 break-words">Reviews</span> <span aria-hidden>&rarr;</span></Link>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -106,7 +106,7 @@ export default function NgoAccountCard() {
                 Log out
               </button>
             ) : (
-              <span className="flex items-center gap-2 text-sm">
+              <span className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-gray-700">Log out of Voluntess?</span>
                 <button type="button" onClick={logout} className="rounded-lg bg-red-600 px-3 py-2 font-semibold text-white">Yes, log out</button>
                 <button type="button" onClick={() => setConfirmOut(false)} className="rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700">Cancel</button>

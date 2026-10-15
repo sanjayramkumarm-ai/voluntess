@@ -255,7 +255,7 @@ export default function DashboardPage() {
           ))}
         </section>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
           {/* Applications */}
           <section className="min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white">
             <div className="flex flex-col gap-4 border-b border-gray-200 px-4 pt-4 sm:px-5">
@@ -407,7 +407,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Side column */}
-          <aside className="min-w-0 space-y-4">
+          <aside className="min-w-0 space-y-4 xl:min-w-[280px]">
             {nextUp && (
               <section className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Next commitment</p>
@@ -427,9 +427,9 @@ export default function DashboardPage() {
               <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Quick actions</p>
               <nav className="flex flex-col">
                 {quick.map((q) => (
-                  <Link key={q.href} href={q.href} className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900">
+                  <Link key={q.href} href={q.href} className="flex min-w-0 items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900">
                     <span className="text-gray-400">{q.icon}</span>
-                    <span className="flex-1">{q.label}</span>
+                    <span className="min-w-0 flex-1 break-words">{q.label}</span>
                     <span className="text-gray-300">{icons.arrow}</span>
                   </Link>
                 ))}
