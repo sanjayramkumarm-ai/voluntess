@@ -158,13 +158,21 @@ function dateParts(value?: string) {
   return { day: String(d.getDate()), month: d.toLocaleDateString("en-IN", { month: "short" }) };
 }
 
-function isUpcoming(value?: string) {
-  if (!value) return false;
-  const d = new Date(value);
+function clock(v?: string) {
+  const m = String(v || "").match(/(\d{1,2}):(\d{2})/);
+  return m ? { h: Number(m[1]), min: Number(m[2]) } : null;
+}
+
+// An opportunity is past once its end time (or the end of its day) has gone by
+function isPastItem(o: any) {
+  if (!o?.date) return false;
+  const d = new Date(o.date);
   if (isNaN(d.getTime())) return false;
-  const t = new Date();
-  t.setHours(0, 0, 0, 0);
-  return d.getTime() >= t.getTime();
+  const end = clock(o.endTime);
+  const endAt = end
+    ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), end.h, end.min)
+    : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+  return endAt.getTime() < Date.now();
 }
 
 export default function HomePage() {
@@ -181,24 +189,27 @@ export default function HomePage() {
       .finally(() => setLoaded(true));
   }, []);
 
+  // Only opportunities that have not ended yet
+  const upcomingItems = useMemo(
+    () => items.filter((o) => !isPastItem(o)),
+    [items]
+  );
+
   const stats = useMemo(() => {
-    const ngos = new Set(items.map((o) => o.organizer?._id || o.organizer?.name).filter(Boolean)).size;
-    const slots = items.reduce((sum, o) => sum + (Number(o.capacity) || 0), 0);
-    const categories = new Set(items.map((o) => o.category).filter(Boolean)).size;
-    return { total: items.length, ngos, slots, categories };
-  }, [items]);
+    const ngos = new Set(upcomingItems.map((o) => o.organizer?._id || o.organizer?.name).filter(Boolean)).size;
+    const slots = upcomingItems.reduce((sum, o) => sum + (Number(o.capacity) || 0), 0);
+    const categories = new Set(upcomingItems.map((o) => o.category).filter(Boolean)).size;
+    return { total: upcomingItems.length, ngos, slots, categories };
+  }, [upcomingItems]);
 
   const featured = useMemo(() => {
-    const upcoming = items
-      .filter((o) => isUpcoming(o.date))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const rest = items.filter((o) => !isUpcoming(o.date));
-    return [...upcoming, ...rest].slice(0, 3);
-  }, [items]);
+    const key = (o: any) => (o.date ? new Date(o.date).getTime() : Infinity);
+    return [...upcomingItems].sort((a, b) => key(a) - key(b)).slice(0, 3);
+  }, [upcomingItems]);
 
   const spotlight = featured[0];
 
-  const countFor = (name: string) => items.filter((o) => o.category === name).length;
+  const countFor = (name: string) => upcomingItems.filter((o) => o.category === name).length;
 
   const dashboardHref = user?.role === "ngo" ? "/ngo" : user?.role === "admin" ? "/admin" : "/dashboard";
 
@@ -382,13 +393,13 @@ export default function HomePage() {
 
           {loaded && featured.length === 0 && (
             <p className="col-span-full rounded-lg border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">
-              No opportunities yet. New listings will appear here when NGOs publish them.
+              No upcoming opportunities right now. New listings will appear here when NGOs publish them.
             </p>
           )}
 
           {featured.map((o) => {
             const p = dateParts(o.date);
-            const up = isUpcoming(o.date);
+            const up = !isPastItem(o);
             return (
               <Link
                 key={o._id}
