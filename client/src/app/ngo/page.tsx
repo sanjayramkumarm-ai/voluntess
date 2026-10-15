@@ -25,10 +25,17 @@ export default function NgoDashboardPage() {
   async function loadOpportunities() {
     try {
       setLoading(true);
+      setMessage("");
       const data = await api("/opportunities/mine");
       setOpportunities(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      setMessage(error.message || "Failed to load opportunities");
+      const nextMessage = error.message || "Failed to load opportunities";
+      setMessage(nextMessage);
+      if (/session expired/i.test(nextMessage)) {
+        setOpportunities([]);
+        setSelectedOpportunity(null);
+        setApplications([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -136,6 +143,7 @@ export default function NgoDashboardPage() {
     setSelectedOpportunity(null);
     setApplications([]);
   }
+  const isSessionExpired = /session expired/i.test(message);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -143,8 +151,28 @@ export default function NgoDashboardPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         {message && (
-          <div className="mb-6 rounded-xl bg-blue-50 p-4 font-medium text-blue-700">
-            {message}
+          <div
+            role="alert"
+            className={`mb-6 rounded-2xl border p-4 text-sm sm:p-5 ${
+              isSessionExpired
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : "border-blue-100 bg-blue-50 text-blue-800"
+            }`}
+          >
+            <p className="font-semibold">{message}</p>
+            {isSessionExpired && (
+              <p className="mt-2">
+                For security, your dashboard data is paused until you sign in
+                again.{" "}
+                <Link
+                  href="/login"
+                  className="font-semibold text-amber-900 underline underline-offset-2"
+                >
+                  Log in again
+                </Link>
+                .
+              </p>
+            )}
           </div>
         )}
 
