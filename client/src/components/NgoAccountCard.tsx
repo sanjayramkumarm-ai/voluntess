@@ -12,6 +12,7 @@ export default function NgoAccountCard() {
   const [stats, setStats] = useState<{ events: number; volunteers: number; certificates: number } | null>(null);
   const [msg, setMsg] = useState("");
   const [confirmOut, setConfirmOut] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
     setUser(getUser());
@@ -27,6 +28,7 @@ export default function NgoAccountCard() {
       })
       .catch(() => setStats(null));
   }, []);
+  useEffect(() => setPhotoFailed(false), [user?.profilePhoto]);
 
   const id = user?.id || user?._id || "";
   const src = photoSrc(user?.profilePhoto);
@@ -56,8 +58,13 @@ export default function NgoAccountCard() {
       <div className="grid gap-8 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
         <div>
           <div className="flex items-center gap-4">
-            {src ? (
-              <img src={src} alt="" className="h-20 w-20 rounded-full object-cover ring-2 ring-white shadow" />
+            {src && !photoFailed ? (
+              <img
+                src={src}
+                alt=""
+                className="h-20 w-20 rounded-full object-cover ring-2 ring-white shadow"
+                onError={() => setPhotoFailed(true)}
+              />
             ) : (
               <span className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white">
                 {(user?.name || "N").charAt(0).toUpperCase()}
