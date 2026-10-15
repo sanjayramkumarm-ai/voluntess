@@ -60,6 +60,23 @@ function formatDate(value?: string) {
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function clock(v?: string) {
+  const m = String(v || "").match(/(\d{1,2}):(\d{2})/);
+  return m ? { h: Number(m[1]), min: Number(m[2]) } : null;
+}
+
+// An opportunity is past once its end time (or the end of its day) has gone by
+function isPastItem(o: any) {
+  if (!o?.date) return false;
+  const d = new Date(o.date);
+  if (isNaN(d.getTime())) return false;
+  const end = clock(o.endTime);
+  const endAt = end
+    ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), end.h, end.min)
+    : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+  return endAt.getTime() < Date.now();
+}
+
 export default function ExplorePage() {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +85,7 @@ export default function ExplorePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
-  const [upcomingOnly, setUpcomingOnly] = useState(false);
+  const [when, setWhen] = useState<"upcoming" | "all" | "past">("upcoming");
   const [sort, setSort] = useState("default");
   const [view, setView] = useState<"list" | "map">("list");
 
@@ -107,14 +124,25 @@ export default function ExplorePage() {
         return false;
       }
 
-      if (upcomingOnly && item.date && new Date(item.date) < today) {
+      if (when === "upcoming" ? isPastItem(item) : when === "past" ? !isPastItem(item) : false) {
         return false;
       }
 
       return true;
     });
 
-    if (sort === "soonest") {
+    if (sort === "default") {
+      const key = (o: any) => (o.date ? new Date(o.date).getTime() : Infinity);
+      list.sort((a, b) => {
+        const pa = isPastItem(a);
+        const pb = isPastItem(b);
+        if (pa !== pb) return pa ? 1 : -1;
+        const ka = key(a);
+        const kb = key(b);
+        if (ka === kb) return 0;
+        return pa ? kb - ka : ka - kb;
+      });
+    } else if (sort === "soonest") {
       list.sort((a, b) => {
         const da = a.date ? new Date(a.date).getTime() : Infinity;
         const db = b.date ? new Date(b.date).getTime() : Infinity;
@@ -129,15 +157,15 @@ export default function ExplorePage() {
     }
 
     return list;
-  }, [opportunities, search, category, city, upcomingOnly, sort]);
+  }, [opportunities, search, category, city, when, sort]);
 
-  const hasFilters = Boolean(search || category || city || upcomingOnly);
+  const hasFilters = Boolean(search || category || city);
 
   const clearFilters = () => {
     setSearch("");
     setCategory("");
     setCity("");
-    setUpcomingOnly(false);
+    setWhen("upcoming");
     setSort("default");
   };
 
@@ -146,7 +174,10 @@ export default function ExplorePage() {
     ? `Find meaningful ${category.toLowerCase()} opportunities and make an impact.`
     : "Find volunteering opportunities, connect with NGOs and make a difference in your community.";
 
-  const pinned = filtered.filter(
+  const upcomingList = filtered.filter((o) => !isPastItem(o));
+  const pastList = filtered.filter((o) => isPastItem(o));
+  const pastTotal = opportunities.filter((o) => isPastItem(o)).length;
+  const pinned = upcomingList.filter(
     (o) => typeof o.latitude === "number" && typeof o.longitude === "number"
   );
 
@@ -154,10 +185,84 @@ export default function ExplorePage() {
   if (search) chips.push({ label: `Search: ${search}`, clear: () => setSearch("") });
   if (category) chips.push({ label: category, clear: () => setCategory("") });
   if (city) chips.push({ label: `Location: ${city}`, clear: () => setCity("") });
-  if (upcomingOnly) chips.push({ label: "Upcoming only", clear: () => setUpcomingOnly(false) });
+  if (when !== "upcoming") chips.push({ label: when === "all" ? "Including past" : "Past only", clear: () => setWhen("upcoming") });
 
   const field =
     "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
+  const renderCard = (item: any) => {
+    const p = dateParts(item.date);
+    const past = isPastItem(item);
+    return (
+      <article
+        key={item._id}
+        className={`group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md ${past ? "opacity-80" : ""}`}
+      >
+        <div className="flex items-start gap-4">
+          <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-md ${past ? "bg-gray-100 text-gray-500" : "bg-blue-50 text-blue-700"}`}>
+            <span className="text-lg font-bold leading-none tabular-nums">{p.day}</span>
+            <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide">{p.month}</span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {item.category && (
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-gray-600">
+                  {item.category}
+                </span>
+              )}
+              {item.date && (
+                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${past ? "text-gray-400" : "text-emerald-600"}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${past ? "bg-gray-300" : "bg-emerald-500"}`} />
+                  {past ? "Ended" : "Upcoming"}
+                </span>
+              )}
+            </div>
+            <h2 className="mt-1.5 break-words text-base font-semibold leading-snug text-gray-900">
+              {item.title}
+            </h2>
+          </div>
+        </div>
+
+        <p className="mt-4 line-clamp-2 text-sm leading-6 text-gray-600">
+          {item.description}
+        </p>
+
+        <ul className="mb-4 mt-4 space-y-1.5 text-sm text-gray-600">
+          {item.location && (
+            <li className="flex items-center gap-2">
+              <span className="text-gray-400">{icons.pin}</span>
+              <span className="min-w-0 truncate">{item.location}</span>
+            </li>
+          )}
+          <li className="flex items-center gap-2">
+            <span className="text-gray-400">{icons.clock}</span>
+            <span className="tabular-nums">
+              {formatDate(item.date)}
+              {item.startTime ? ` · ${item.startTime}` : ""}
+              {item.startTime && item.endTime ? ` - ${item.endTime}` : ""}
+            </span>
+          </li>
+          {item.capacity ? (
+            <li className="flex items-center gap-2">
+              <span className="text-gray-400">{icons.users}</span>
+              <span>{item.capacity} volunteers needed</span>
+            </li>
+          ) : null}
+        </ul>
+
+        <div className="mt-auto border-t border-gray-100 pt-4">
+          <Link
+            href={`/opportunities/${item._id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
+            View details
+            <span className="transition group-hover:translate-x-0.5">{icons.arrow}</span>
+          </Link>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
@@ -177,8 +282,8 @@ export default function ExplorePage() {
             {loading ? "Loading…" : (
               <>
                 <span className="font-semibold tabular-nums text-gray-900">{filtered.length}</span>{" "}
-                {filtered.length === 1 ? "opportunity" : "opportunities"}
-                {hasFilters ? <span> of {opportunities.length}</span> : null}
+                {when === "upcoming" ? "upcoming " : when === "past" ? "past " : ""}{filtered.length === 1 ? "opportunity" : "opportunities"}
+                {when === "upcoming" && pastTotal > 0 ? <span> · {pastTotal} past</span> : null}
               </>
             )}
           </p>
@@ -220,16 +325,20 @@ export default function ExplorePage() {
               <option value="latest">Sort: Latest first</option>
             </select>
 
-            <div className="flex items-center justify-between gap-3 lg:justify-end">
-              <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={upcomingOnly}
-                  onChange={(e) => setUpcomingOnly(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
-                />
-                Upcoming only
-              </label>
+            <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-end">
+              <div className="inline-flex rounded-md border border-gray-300 bg-gray-50 p-0.5" role="group" aria-label="When">
+                {([["upcoming", "Upcoming"], ["all", "All"], ["past", "Past"]] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setWhen(v)}
+                    aria-pressed={when === v}
+                    className={`rounded px-2.5 py-1.5 text-sm font-medium ${when === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
 
               <div className="inline-flex rounded-md border border-gray-300 bg-gray-50 p-0.5" role="group" aria-label="View">
                 <button
@@ -305,7 +414,7 @@ export default function ExplorePage() {
           {!loading && !error && filtered.length === 0 && (
             <div className="rounded-lg border border-gray-200 bg-white px-6 py-14 text-center">
               <p className="text-sm font-semibold text-gray-800">
-                {hasFilters ? "No matching opportunities" : "No opportunities yet"}
+                {hasFilters ? "No matching opportunities" : when === "upcoming" && pastTotal > 0 ? "No upcoming opportunities right now" : "No opportunities yet"}
               </p>
               <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
                 {hasFilters
@@ -324,87 +433,34 @@ export default function ExplorePage() {
             <>
               {view === "map" && (
                 <div className="mb-4">
-                  {pinned.length < filtered.length && (
+                  {pinned.length < upcomingList.length && (
                     <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
-                      {filtered.length - pinned.length} of these have no map pin yet. Switch to List to see them all.
+                      {upcomingList.length - pinned.length} of these have no map pin yet. Switch to List to see them all.
                     </p>
                   )}
                   <MapView items={pinned} />
                 </div>
               )}
 
-              <div className={view === "map" ? "hidden" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}>
-                {filtered.map((item) => {
-                  const p = dateParts(item.date);
-                  return (
-                    <article
-                      key={item._id}
-                      className="group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-md ${p.past ? "bg-gray-100 text-gray-500" : "bg-blue-50 text-blue-700"}`}>
-                          <span className="text-lg font-bold leading-none tabular-nums">{p.day}</span>
-                          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide">{p.month}</span>
-                        </div>
+              <div className={view === "map" ? "hidden" : "space-y-10"}>
+                {upcomingList.length > 0 && (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {upcomingList.map((item) => renderCard(item))}
+                  </div>
+                )}
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {item.category && (
-                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-gray-600">
-                                {item.category}
-                              </span>
-                            )}
-                            {item.date && (
-                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${p.past ? "text-gray-400" : "text-emerald-600"}`}>
-                                <span className={`h-1.5 w-1.5 rounded-full ${p.past ? "bg-gray-300" : "bg-emerald-500"}`} />
-                                {p.past ? "Past" : "Upcoming"}
-                              </span>
-                            )}
-                          </div>
-                          <h2 className="mt-1.5 break-words text-base font-semibold leading-snug text-gray-900">
-                            {item.title}
-                          </h2>
-                        </div>
-                      </div>
-
-                      <p className="mt-4 line-clamp-2 text-sm leading-6 text-gray-600">
-                        {item.description}
-                      </p>
-
-                      <ul className="mt-4 space-y-1.5 text-sm text-gray-600">
-                        {item.location && (
-                          <li className="flex items-center gap-2">
-                            <span className="text-gray-400">{icons.pin}</span>
-                            <span className="min-w-0 truncate">{item.location}</span>
-                          </li>
-                        )}
-                        <li className="flex items-center gap-2">
-                          <span className="text-gray-400">{icons.clock}</span>
-                          <span className="tabular-nums">
-                            {formatDate(item.date)}
-                            {item.startTime ? ` · ${item.startTime}` : ""}
-                          </span>
-                        </li>
-                        {item.capacity ? (
-                          <li className="flex items-center gap-2">
-                            <span className="text-gray-400">{icons.users}</span>
-                            <span>{item.capacity} volunteers needed</span>
-                          </li>
-                        ) : null}
-                      </ul>
-
-                      <div className="mt-auto border-t border-gray-100 pt-4">
-                        <Link
-                          href={`/opportunities/${item._id}`}
-                          className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700"
-                        >
-                          View details
-                          <span className="transition group-hover:translate-x-0.5">{icons.arrow}</span>
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
+                {pastList.length > 0 && (
+                  <div>
+                    {when === "all" && (
+                      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                        Past opportunities ({pastList.length})
+                      </h2>
+                    )}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {pastList.map((item) => renderCard(item))}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
