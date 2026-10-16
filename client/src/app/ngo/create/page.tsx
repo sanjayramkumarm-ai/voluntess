@@ -97,7 +97,7 @@ export default function CreateOpportunityPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <nav className="text-sm text-slate-500">
           <Link href="/ngo" className="hover:text-slate-900">NGO Dashboard</Link>
