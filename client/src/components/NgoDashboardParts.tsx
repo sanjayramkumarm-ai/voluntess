@@ -13,6 +13,20 @@ function Icon({ children, className = "h-5 w-5" }: { children: React.ReactNode; 
   );
 }
 
+function Avatar({ user, size = "h-16 w-16", text = "text-xl" }: { user: any; size?: string; text?: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = photoSrc(user?.profilePhoto);
+  useEffect(() => setFailed(false), [user?.profilePhoto]);
+  if (src && !failed) {
+    return <img src={src} alt="" className={`${size} shrink-0 rounded-full object-cover`} onError={() => setFailed(true)} />;
+  }
+  return (
+    <span className={`flex ${size} ${text} shrink-0 items-center justify-center rounded-full bg-slate-900 font-semibold text-white`}>
+      {(user?.name || "N").charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 type Stats = { events: number; upcoming: number; volunteers: number; certificates: number };
 
 export function NgoHero() {
@@ -44,55 +58,66 @@ export function NgoHero() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const dateText = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const place = user?.city || user?.location || "";
 
-  const stats: { label: string; value?: number }[] = [
-    { label: "Opportunities", value: s?.events },
-    { label: "Upcoming events", value: s?.upcoming },
-    { label: "Approved volunteers", value: s?.volunteers },
-    { label: "Certificates issued", value: s?.certificates },
+  const stats: { label: string; value?: number; hint: string; tone: string; icon: React.ReactNode }[] = [
+    { label: "Opportunities", value: s?.events, hint: "Total published", tone: "bg-blue-50 text-blue-600", icon: <Icon><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Icon> },
+    { label: "Upcoming events", value: s?.upcoming, hint: "Scheduled activities", tone: "bg-amber-50 text-amber-600", icon: <Icon><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon> },
+    { label: "Approved volunteers", value: s?.volunteers, hint: "People making impact", tone: "bg-emerald-50 text-emerald-600", icon: <Icon><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 4.5-5" /></Icon> },
+    { label: "Certificates issued", value: s?.certificates, hint: "Verified contributions", tone: "bg-violet-50 text-violet-600", icon: <Icon><circle cx="12" cy="9" r="6" /><path d="M8.5 14.5 7 22l5-3 5 3-1.5-7.5" /></Icon> },
   ];
 
   return (
-    <section className="border-b border-gray-200 bg-white">
+    <section className="bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-          <div className="min-w-0">
-            <h1 className="break-words text-2xl font-semibold tracking-tight text-gray-900">
-              {greeting}, {user?.name || "there"}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">Manage your opportunities, volunteers and certificates.</p>
+          <div className="flex min-w-0 items-center gap-4">
+            <Avatar user={user} />
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500">NGO <span className="px-1 text-slate-300">/</span> Overview</p>
+              <h1 className="break-words text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                {greeting}, {user?.name || "there"}
+              </h1>
+              <p className="text-sm text-slate-500">{dateText}{place ? ` · ${place}` : ""}</p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/ngo/create" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700">
+            <Link href="/ngo/create" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+              <Icon className="h-4 w-4"><path d="M12 5v14M5 12h14" /></Icon>
               New opportunity
             </Link>
-            <Link href="/ngo/attendance" className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+            <Link href="/ngo/attendance" className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               Attendance &amp; QR
             </Link>
-            <Link href="/ngo/completions" className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+            <Link href="/ngo/completions" className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               Certificates
             </Link>
           </div>
         </div>
 
-        <dl className="mt-6 grid grid-cols-2 divide-x divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 lg:grid-cols-4 lg:divide-y-0">
+        <dl className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((st) => (
-            <div key={st.label} className="bg-white p-5">
-              <dt className="text-sm text-gray-500">{st.label}</dt>
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">
+            <div key={st.label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-sm text-slate-600">{st.label}</dt>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${st.tone}`}>{st.icon}</span>
+              </div>
+              <dd className="mt-5 text-3xl font-bold text-slate-900">
                 {state === "loading" ? (
-                  <span className="block h-7 w-10 animate-pulse rounded bg-gray-200" />
+                  <span className="block h-8 w-10 animate-pulse rounded bg-slate-200" />
                 ) : state === "error" ? (
-                  <span className="text-gray-400">&ndash;</span>
+                  <span className="text-slate-300">&ndash;</span>
                 ) : (
                   st.value ?? 0
                 )}
               </dd>
+              <p className="mt-1 text-xs text-slate-500">{st.hint}</p>
             </div>
           ))}
         </dl>
         {state === "error" && (
-          <p className="mt-3 text-sm text-gray-600">Could not load stats. Check that the backend is running and refresh.</p>
+          <p className="mt-3 text-sm text-slate-600">Could not load stats. Check that the backend is running and refresh.</p>
         )}
       </div>
     </section>
@@ -101,66 +126,85 @@ export function NgoHero() {
 
 export function NgoOverview({ onRefresh }: { onRefresh?: (...args: any[]) => any }) {
   const [user, setUser] = useState<any>(null);
-  const [photoFailed, setPhotoFailed] = useState(false);
   useEffect(() => setUser(getUser()), []);
-  useEffect(() => setPhotoFailed(false), [user?.profilePhoto]);
 
   const id = user?.id || user?._id || "";
-  const src = photoSrc(user?.profilePhoto);
 
-  const tiles: { href: string; title: string; text: string; icon: React.ReactNode }[] = [
-    { href: "/ngo/create", title: "Create opportunity", text: "Publish a new volunteering event.", icon: <Icon><path d="M12 5v14M5 12h14" /></Icon> },
-    { href: "/ngo/attendance", title: "Attendance & QR", text: "Check-in QR codes and hours to approve.", icon: <Icon><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM20 14v7M14 20h3" /></Icon> },
-    { href: "/ngo/completions", title: "Certificates", text: "Verify hours and issue certificates.", icon: <Icon><circle cx="12" cy="9" r="6" /><path d="M8.5 14.5 7 22l5-3 5 3-1.5-7.5" /></Icon> },
-    { href: "/messages", title: "Messages", text: "Chat with your volunteers.", icon: <Icon><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></Icon> },
+  const actions: { href: string; title: string; icon: React.ReactNode }[] = [
+    { href: "/ngo/create", title: "Create opportunity", icon: <Icon><path d="M12 5v14M5 12h14" /></Icon> },
+    { href: "/ngo/attendance", title: "Attendance & QR", icon: <Icon><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM20 14v7M14 20h3" /></Icon> },
+    { href: "/ngo/completions", title: "Certificates", icon: <Icon><circle cx="12" cy="9" r="6" /><path d="M8.5 14.5 7 22l5-3 5 3-1.5-7.5" /></Icon> },
+    { href: "/messages", title: "Messages", icon: <Icon><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></Icon> },
   ];
 
   return (
-    <section className="w-full space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          {src && !photoFailed ? (
-            <img src={src} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" onError={() => setPhotoFailed(true)} />
-          ) : (
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-900 text-lg font-semibold text-white">
-              {(user?.name || "N").charAt(0).toUpperCase()}
-            </span>
-          )}
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-gray-900">Public profile</h2>
-            <p className="text-sm text-gray-500">Keep your logo and description updated to attract more applicants.</p>
+    <section className="w-full bg-slate-50">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
+                <Avatar user={user} size="h-14 w-14" text="text-lg" />
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-slate-900">Public profile</h2>
+                  <p className="text-sm text-slate-500">Keep your logo and description updated to attract more applicants.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/ngo/profile" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Edit profile</Link>
+                <Link href={id ? `/ngos/${id}` : "/ngo"} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">View public page</Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">My opportunities</h2>
+              <p className="text-sm text-slate-500">To review volunteers, use the <span className="font-semibold text-slate-700">Applicants</span> button on an opportunity below.</p>
+            </div>
+            {onRefresh && (
+              <button type="button" onClick={() => onRefresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                <Icon className="h-4 w-4"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" /></Icon>
+                Refresh
+              </button>
+            )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/ngo/profile" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700">Edit profile</Link>
-          <Link href={id ? `/ngos/${id}` : "/ngo"} className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">View public page</Link>
+
+        <div className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quick actions</h2>
+            <ul className="mt-3 divide-y divide-slate-100">
+              {actions.map((a) => (
+                <li key={a.href}>
+                  <Link href={a.href} className="group flex items-center gap-3 py-3 text-sm font-medium text-slate-800 transition hover:text-blue-600">
+                    <span className="text-slate-400 group-hover:text-blue-600">{a.icon}</span>
+                    <span className="flex-1">{a.title}</span>
+                    <span className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-600">&rarr;</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900">Account details</h2>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Name</dt>
+                <dd className="truncate font-semibold text-slate-900">{user?.name || "-"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Email</dt>
+                <dd className="truncate font-semibold text-slate-900">{user?.email || "-"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Role</dt>
+                <dd className="font-semibold text-slate-900">NGO</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {tiles.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className="group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 transition hover:border-gray-400"
-          >
-            <span className="text-gray-700">{t.icon}</span>
-            <h3 className="mt-3 text-sm font-semibold text-gray-900">{t.title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{t.text}</p>
-            <span className="mt-auto pt-4 text-sm font-medium text-gray-900">
-              Open <span className="inline-block transition group-hover:translate-x-1">&rarr;</span>
-            </span>
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 text-sm text-gray-500">
-        <p>To review volunteers, use the <strong className="font-medium text-gray-800">Applicants</strong> button on an opportunity below.</p>
-        {onRefresh && (
-          <button type="button" onClick={() => onRefresh()} className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50">
-            Refresh
-          </button>
-        )}
       </div>
     </section>
   );
