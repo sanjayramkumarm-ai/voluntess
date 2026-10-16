@@ -9,11 +9,26 @@ import dynamic from "next/dynamic";
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-72 items-center justify-center rounded-xl border border-gray-300 text-gray-500">
+    <div className="flex h-72 items-center justify-center rounded-lg border border-slate-300 text-sm text-slate-500">
       Loading map...
     </div>
   ),
 });
+
+const inputClass =
+  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
+const hintClass = "mt-1.5 text-xs text-slate-500";
+
+function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
+      <div className="mt-5 space-y-5">{children}</div>
+    </div>
+  );
+}
 
 export default function CreateOpportunityPage() {
   const router = useRouter();
@@ -82,225 +97,182 @@ export default function CreateOpportunityPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-10 text-white">
-        <div className="mx-auto max-w-4xl">
-          <Link
-            href="/ngo"
-            className="text-sm text-blue-100 hover:text-white"
-          >
-            ? Back to NGO Dashboard
+    <main className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <nav className="text-sm text-slate-500">
+          <Link href="/ngo" className="hover:text-slate-900">NGO Dashboard</Link>
+          <span className="px-2 text-slate-300">/</span>
+          <span className="text-slate-700">Create opportunity</span>
+        </nav>
+
+        <div className="mt-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Create opportunity</h1>
+            <p className="mt-1 text-sm text-slate-500">Publish a volunteering opportunity for the Voluntess community.</p>
+          </div>
+          <Link href="/ngo" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            &larr; Back to dashboard
           </Link>
-
-          <h1 className="mt-6 text-4xl font-bold">
-            Create Opportunity
-          </h1>
-
-          <p className="mt-3 text-blue-100">
-            Publish a volunteering opportunity for the Voluntess community.
-          </p>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-4xl px-6 py-10">
-        <form
-          onSubmit={submit}
-          className="rounded-2xl bg-white p-8 shadow-sm"
-        >
-          {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-              {error}
-            </div>
-          )}
+        <form onSubmit={submit} className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            )}
 
-          <div className="space-y-6">
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Opportunity Title
-              </label>
-
-              <input
-                name="title"
-                value={form.title}
-                onChange={updateField}
-                placeholder="Example: Beach Cleanup Drive"
-                required
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Description
-              </label>
-
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={updateField}
-                placeholder="Describe what volunteers will do..."
-                rows={5}
-                required
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Category
-              </label>
-
-              <select
-                name="category"
-                value={form.category}
-                onChange={updateField}
-                className="w-full rounded-xl border border-gray-300 px-4 py-3"
-              >
-                <option>Environment</option>
-                <option>Education</option>
-                <option>Healthcare</option>
-                <option>Animal Welfare</option>
-                <option>Food & Hunger</option>
-                <option>Child Welfare</option>
-                <option>Elderly Care</option>
-                <option>Disaster Relief</option>
-                <option>Community Service</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Location
-              </label>
-
-              <input
-                name="location"
-                value={form.location}
-                onChange={updateField}
-                placeholder="Example: Besant Nagar, Chennai"
-                required
-                className="w-full rounded-xl border border-gray-300 px-4 py-3"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Pin on map (optional)
-              </label>
-
-              <LocationPicker
-                latitude={coords.lat}
-                longitude={coords.lng}
-                onChange={(lat, lng) => setCoords({ lat, lng })}
-              />
-
-              <p className="mt-2 text-sm text-gray-400">
-                A pin helps volunteers find you on the Map page.
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-
+            <Card title="Basic details" subtitle="Tell volunteers what this opportunity is about.">
               <div>
-                <label className="mb-2 block font-semibold text-gray-800">
-                  Date
-                </label>
-
+                <label htmlFor="title" className={labelClass}>Opportunity title</label>
                 <input
-                  type="date"
-                  name="date"
-                  value={form.date}
+                  id="title"
+                  name="title"
+                  value={form.title}
                   onChange={updateField}
+                  placeholder="Example: Beach Cleanup Drive"
                   required
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="mb-2 block font-semibold text-gray-800">
-                  Start Time
-                </label>
-
-                <input
-                  type="time"
-                  name="startTime"
-                  value={form.startTime}
+                <label htmlFor="description" className={labelClass}>Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={form.description}
                   onChange={updateField}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3"
+                  placeholder="Describe what volunteers will do..."
+                  rows={5}
+                  required
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="mb-2 block font-semibold text-gray-800">
-                  End Time
-                </label>
+                <label htmlFor="category" className={labelClass}>Category</label>
+                <select id="category" name="category" value={form.category} onChange={updateField} className={inputClass}>
+                  <option>Environment</option>
+                  <option>Education</option>
+                  <option>Healthcare</option>
+                  <option>Animal Welfare</option>
+                  <option>Food & Hunger</option>
+                  <option>Child Welfare</option>
+                  <option>Elderly Care</option>
+                  <option>Disaster Relief</option>
+                  <option>Community Service</option>
+                </select>
+              </div>
+            </Card>
 
+            <Card title="Location" subtitle="Where should volunteers go?">
+              <div>
+                <label htmlFor="location" className={labelClass}>Address or area</label>
                 <input
-                  type="time"
-                  name="endTime"
-                  value={form.endTime}
+                  id="location"
+                  name="location"
+                  value={form.location}
                   onChange={updateField}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3"
+                  placeholder="Example: Besant Nagar, Chennai"
+                  required
+                  className={inputClass}
                 />
               </div>
 
-            </div>
+              <div>
+                <label className={labelClass}>Pin on map <span className="font-normal text-slate-400">(optional)</span></label>
+                <div className="overflow-hidden rounded-lg border border-slate-300">
+                  <LocationPicker
+                    latitude={coords.lat}
+                    longitude={coords.lng}
+                    onChange={(lat, lng) => setCoords({ lat, lng })}
+                  />
+                </div>
+                <p className={hintClass}>Tap the map to drop a pin. A pin helps volunteers find you on the Map page.</p>
+              </div>
+            </Card>
 
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Volunteer Capacity
-              </label>
+            <Card title="Schedule" subtitle="When will the event take place?">
+              <div className="grid gap-5 md:grid-cols-3">
+                <div>
+                  <label htmlFor="date" className={labelClass}>Date</label>
+                  <input id="date" type="date" name="date" value={form.date} onChange={updateField} required className={inputClass} />
+                </div>
+                <div>
+                  <label htmlFor="startTime" className={labelClass}>Start time</label>
+                  <input id="startTime" type="time" name="startTime" value={form.startTime} onChange={updateField} className={inputClass} />
+                </div>
+                <div>
+                  <label htmlFor="endTime" className={labelClass}>End time</label>
+                  <input id="endTime" type="time" name="endTime" value={form.endTime} onChange={updateField} className={inputClass} />
+                </div>
+              </div>
+            </Card>
 
-              <input
-                type="number"
-                name="capacity"
-                min="1"
-                value={form.capacity}
-                onChange={updateField}
-                required
-                className="w-full rounded-xl border border-gray-300 px-4 py-3"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-semibold text-gray-800">
-                Required Skills
-              </label>
-
-              <input
-                name="skills"
-                value={form.skills}
-                onChange={updateField}
-                placeholder="Example: Teamwork, Teaching, Communication"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3"
-              />
-
-              <p className="mt-2 text-sm text-gray-400">
-                Separate multiple skills with commas.
-              </p>
-            </div>
-
+            <Card title="Volunteers" subtitle="How many people do you need, and what skills help?">
+              <div className="grid gap-5 md:grid-cols-3">
+                <div>
+                  <label htmlFor="capacity" className={labelClass}>Capacity</label>
+                  <input
+                    id="capacity"
+                    type="number"
+                    name="capacity"
+                    min="1"
+                    value={form.capacity}
+                    onChange={updateField}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="skills" className={labelClass}>Required skills</label>
+                  <input
+                    id="skills"
+                    name="skills"
+                    value={form.skills}
+                    onChange={updateField}
+                    placeholder="Example: Teamwork, Teaching, Communication"
+                    className={inputClass}
+                  />
+                  <p className={hintClass}>Separate multiple skills with commas.</p>
+                </div>
+              </div>
+            </Card>
           </div>
 
-          <div className="mt-8 flex gap-4">
-            <Link
-              href="/ngo"
-              className="flex-1 rounded-xl border border-gray-300 px-5 py-4 text-center font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Link>
+          <aside className="space-y-6">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
+              <h2 className="text-base font-semibold text-slate-900">Publish</h2>
+              <p className="mt-1 text-sm text-slate-500">Your opportunity will be visible to volunteers on the Explore page right away.</p>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 rounded-xl bg-blue-600 px-5 py-4 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Publishing..." : "Publish Opportunity"}
-            </button>
-          </div>
+              <div className="mt-5 flex flex-col gap-2.5">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? "Publishing..." : "Publish opportunity"}
+                </button>
+                <Link
+                  href="/ngo"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cancel
+                </Link>
+              </div>
+
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tips</h3>
+                <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                  <li>Use a clear title that says what volunteers will do.</li>
+                  <li>Mention what to bring and who to contact.</li>
+                  <li>Add a map pin so people can find the place easily.</li>
+                </ul>
+              </div>
+            </div>
+          </aside>
         </form>
-      </section>
+      </div>
     </main>
   );
 }
