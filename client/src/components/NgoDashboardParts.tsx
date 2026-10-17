@@ -70,7 +70,7 @@ export function NgoHero() {
 
   return (
     <section className="bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div className="flex min-w-0 items-center gap-4">
             <Avatar user={user} />
@@ -82,28 +82,28 @@ export function NgoHero() {
               <p className="text-sm text-slate-500">{dateText}{place ? ` · ${place}` : ""}</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/ngo/create" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <Link href="/ngo/create" className="col-span-2 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 sm:col-span-1">
               <Icon className="h-4 w-4"><path d="M12 5v14M5 12h14" /></Icon>
               New opportunity
             </Link>
-            <Link href="/ngo/attendance" className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <Link href="/ngo/attendance" className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-5">
               Attendance &amp; QR
             </Link>
-            <Link href="/ngo/completions" className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <Link href="/ngo/completions" className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-5">
               Certificates
             </Link>
           </div>
         </div>
 
-        <dl className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-5 lg:grid-cols-4">
           {stats.map((st) => (
-            <div key={st.label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={st.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-start justify-between gap-3">
-                <dt className="text-sm text-slate-600">{st.label}</dt>
+                <dt className="text-xs text-slate-600 sm:text-sm">{st.label}</dt>
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${st.tone}`}>{st.icon}</span>
               </div>
-              <dd className="mt-5 text-3xl font-bold text-slate-900">
+              <dd className="mt-3 text-2xl font-bold text-slate-900 sm:mt-5 sm:text-3xl">
                 {state === "loading" ? (
                   <span className="block h-8 w-10 animate-pulse rounded bg-slate-200" />
                 ) : state === "error" ? (
@@ -141,7 +141,7 @@ export function NgoOverview({ onRefresh }: { onRefresh?: (...args: any[]) => any
     <section className="w-full bg-slate-50">
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-center gap-4">
                 <Avatar user={user} size="h-14 w-14" text="text-lg" />
@@ -157,7 +157,7 @@ export function NgoOverview({ onRefresh }: { onRefresh?: (...args: any[]) => any
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900">My opportunities</h2>
               <p className="text-sm text-slate-500">To review volunteers, use the <span className="font-semibold text-slate-700">Applicants</span> button on an opportunity above.</p>
@@ -172,7 +172,7 @@ export function NgoOverview({ onRefresh }: { onRefresh?: (...args: any[]) => any
         </div>
 
         <div className="space-y-5">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quick actions</h2>
             <ul className="mt-3 divide-y divide-slate-100">
               {actions.map((a) => (
@@ -187,7 +187,7 @@ export function NgoOverview({ onRefresh }: { onRefresh?: (...args: any[]) => any
             </ul>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-base font-semibold text-slate-900">Account details</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-4">
