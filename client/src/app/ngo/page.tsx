@@ -176,7 +176,7 @@ export default function NgoDashboardPage() {
           </div>
         )}
 
-        <NgoOverview onRefresh={loadOpportunities} />
+        
 
         <div className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -470,6 +470,9 @@ export default function NgoDashboardPage() {
         )}
 
         <NgoAccountCard />
+      <div className="mt-8">
+          <NgoOverview onRefresh={loadOpportunities} />
+        </div>
       </section>
     </main>
   );
