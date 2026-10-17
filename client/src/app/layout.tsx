@@ -1,4 +1,5 @@
 import "./globals.css";
+import BackBar from "@/components/BackBar";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
@@ -21,7 +22,8 @@ export default function Root({
       </head>
       <body>
         <Navbar />
-        <div>{children}</div>
+        <div><BackBar />
+        {children}</div>
       </body>
     </html>
   );
