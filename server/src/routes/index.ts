@@ -13,6 +13,7 @@ import { Router } from "express";
 import { protect, allow } from "../middleware/auth";
 import { wrap } from "../middleware/error";
 import * as auth from "../controllers/auth";
+import * as otp from "../controllers/authOtp";
 import * as opp from "../controllers/opportunity";
 import * as app from "../controllers/application";
 import * as notification from "../controllers/notification";
@@ -20,8 +21,12 @@ import * as quest from "../controllers/quest";
 
 const r = Router();
 
-r.post("/auth/register", wrap(auth.register));
-r.post("/auth/login", wrap(auth.login));
+r.post("/auth/register", wrap(otp.register));
+r.post("/auth/login", wrap(otp.login));
+r.post("/auth/verify-email", wrap(otp.verifyEmail));
+r.post("/auth/resend-code", wrap(otp.resendCode));
+r.post("/auth/google", wrap(otp.googleLogin));
+r.post("/auth/phone", wrap(otp.phoneLogin));
 r.get("/auth/me", protect, wrap(auth.me));
 
 r.get("/opportunities", wrap(opp.list));

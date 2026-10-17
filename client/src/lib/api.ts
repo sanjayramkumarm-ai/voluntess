@@ -1,4 +1,4 @@
-﻿const API_URL =
+const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 type ApiOptions = {
@@ -31,9 +31,13 @@ export async function api(path: string, options: ApiOptions = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(
+    const err: any = new Error(
       data.message || `Request failed (${response.status})`
     );
+    err.status = response.status;
+    err.code = data.code;
+    err.data = data;
+    throw err;
   }
 
   return data;

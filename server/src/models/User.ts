@@ -34,6 +34,10 @@ const userSchema = new Schema({
 
     skills: [String],
 
+    // Google / phone sign-in
+    googleId: { type: String, unique: true, sparse: true },
+    phone: { type: String, unique: true, sparse: true },
+
     // Email verification
     emailVerified: {
       type: Boolean,
