@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { z } from "zod";
-import admin from "firebase-admin";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import User from "../models/User";
 import AuthCode from "../models/AuthCode";
@@ -262,10 +263,11 @@ export const phoneLogin = async (req: Request, res: Response) => {
 
   let phone: string | undefined;
   try {
-    if (!admin.apps.length) admin.initializeApp({ projectId });
-    const decoded = await admin.auth().verifyIdToken(d.idToken);
+    if (!getApps().length) initializeApp({ projectId });
+    const decoded = await getAuth().verifyIdToken(d.idToken);
     phone = decoded.phone_number;
-  } catch {
+  } catch (err: any) {
+    console.error("[phoneLogin] verifyIdToken failed:", err?.code, err?.message);
     return res.status(401).json({ message: "Phone verification failed or expired. Try again." });
   }
   if (!phone) {
