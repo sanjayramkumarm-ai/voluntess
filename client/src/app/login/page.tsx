@@ -68,6 +68,17 @@ function PhoneIcon() {
   );
 }
 
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-5 w-5">
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z" />
+      <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z" />
+      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
+    </svg>
+  );
+}
+
 function EyeIcon({ off }: { off: boolean }) {
   return (
     <svg {...iconProps} className="h-5 w-5">
@@ -329,6 +340,10 @@ function Form() {
 
   /* ---------- google ---------- */
   googleHandler.current = async (credential: string) => {
+    if (register && !agree) {
+      setErr("Please agree to the Terms of Service and Privacy Policy.");
+      return;
+    }
     setBusy(true);
     setErr("");
     try {
@@ -357,7 +372,7 @@ function Form() {
       window.google.accounts.id.renderButton(googleBtnRef.current, {
         theme: "outline",
         size: "large",
-        width: 340,
+        width: 384,
         text: "continue_with",
       });
     };
@@ -812,7 +827,7 @@ function Form() {
                 {!busy && <ArrowIcon />}
               </button>
 
-              {(showGoogle || showPhoneOption) && (
+              {true && (
                 <>
                   <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400">
                     <span className="h-px flex-1 bg-gray-200" />
@@ -821,9 +836,29 @@ function Form() {
                   </div>
 
                   <div className="space-y-3">
-                    {showGoogle && (
-                      <div className="flex justify-center">
-                        <div ref={googleBtnRef} />
+                    <div className="relative h-10">
+                      <div className={outlineBtn + " pointer-events-none !h-10 !py-0"}>
+                        <GoogleIcon />
+                        Continue with Google
+                      </div>
+                      {showGoogle ? (
+                        <div className="absolute inset-0 overflow-hidden opacity-0">
+                          <div ref={googleBtnRef} />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label="Continue with Google"
+                          onClick={() => setErr("Google sign-in is not set up yet. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to client/.env.local and restart.")}
+                          className="absolute inset-0"
+                        />
+                      )}
+                    </div>
+                    {showPhoneOption && (
+                      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400">
+                        <span className="h-px flex-1 bg-gray-200" />
+                        or
+                        <span className="h-px flex-1 bg-gray-200" />
                       </div>
                     )}
                     {showPhoneOption && (

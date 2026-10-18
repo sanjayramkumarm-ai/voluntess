@@ -35,3 +35,10 @@ server/uploads/
 responsive-audit.txt
 notif-audit.txt
 client/responsive-audit.txt
+*.tsbuildinfo
+
+.env
+.env.local
+.env*.local
+server/.env
+client/.env.local
