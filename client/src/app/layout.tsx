@@ -1,6 +1,14 @@
 import "./globals.css";
 import BackBar from "@/components/BackBar";
 import Navbar from "@/components/Navbar";
+import { Roboto_Slab } from "next/font/google";
+
+const playfair = Roboto_Slab({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-playfair",
+});
 
 export const metadata = {
   title: "Voluntess — Volunteer Today. Change Tomorrow."
@@ -12,7 +20,7 @@ export default function Root({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={playfair.variable}>
       <head>
         <script
           dangerouslySetInnerHTML={{

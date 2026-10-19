@@ -234,3 +234,19 @@ html, body { max-width: 100%; overflow-x: clip; }
 main img, main video { max-width: 100%; }
 main { overflow-wrap: break-word; }
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+
+/* Playfair Display everywhere */
+body,
+body * {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif !important;
+}
+body {
+  font-variant-numeric: lining-nums;
+}
+
+
+/* Roboto Slab everywhere */
+body, body * {
+  font-family: var(--font-playfair), "Roboto Slab", Georgia, serif !important;
+}
