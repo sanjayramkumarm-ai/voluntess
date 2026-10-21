@@ -21,8 +21,9 @@ app.use(helmet());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://10.76.32.66:3000",
-];
-
+  "https://voluntess.vercel.app",
+  (process.env.CLIENT_URL || "").replace(/\/$/, ""),
+].filter(Boolean); 
 app.use(
   cors({
     origin: (origin, cb) => {
